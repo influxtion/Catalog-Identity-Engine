@@ -41,7 +41,17 @@ def evaluate_frozen(config, model_directory: Path, output: Path, hybrid=False):
     index.fit([normalize(x) for x in splits[0].listings.values()])
     output.mkdir(parents=True)
     retrieval, ranks = retrieval_evaluation(
-        index, test, config.retrieval_k, output / "candidates.jsonl"
+        index,
+        test,
+        sorted(set(config.retrieval_k + [config.pipeline_k])),
+        output / "candidates.jsonl",
+    )
+    retrieved = np.array(
+        [
+            ranks[p.left].get(p.right, config.pipeline_k + 1) <= config.pipeline_k
+            or ranks[p.right].get(p.left, config.pipeline_k + 1) <= config.pipeline_k
+            for p in test.pairs
+        ]
     )
     if hybrid:
         retrieval["embedding_note"] = (
@@ -85,7 +95,14 @@ def evaluate_frozen(config, model_directory: Path, output: Path, hybrid=False):
         "test_sha256": file_hash(config.test),
         "implementation": implementation_manifest(),
         "classification": classification_metrics(labels, predictions),
-        "probability_quality": probability_metrics(labels, probabilities),
+        "probability_quality": probability_metrics(
+            labels, probabilities, "sigmoid" if model.calibration is not None else "none"
+        ),
+        "retrieval_plus_matching_on_labeled_pairs": {
+            **classification_metrics(labels, predictions & retrieved),
+            "k": config.pipeline_k,
+            "note": "Either direction qualifies. Unknown candidates are not negative labels.",
+        },
         "retrieval": retrieval,
     }
     write_json(output / "report.json", report)

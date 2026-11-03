@@ -20,6 +20,10 @@ def test_frozen_evaluation_uses_saved_model_and_checks_inputs(tmp_path):
     before = (model / "matcher.json").read_bytes()
     result = evaluate_frozen(config, model, tmp_path / "test-run")
     assert result["phase"] == "frozen_test_evaluation"
+    assert result["probability_quality"]["probability_calibration"].startswith("sigmoid;")
+    combined = result["retrieval_plus_matching_on_labeled_pairs"]
+    assert combined["k"] == config.pipeline_k
+    assert combined["true_positives"] <= result["classification"]["true_positives"]
     assert (model / "matcher.json").read_bytes() == before
     paths["validation"].write_text(paths["validation"].read_text() + "\n")
     with pytest.raises(ValueError, match="development inputs"):

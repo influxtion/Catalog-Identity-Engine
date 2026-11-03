@@ -19,6 +19,9 @@ def test_validation_development_never_needs_test_file(tmp_path):
     )
     result = develop(config, tmp_path / "run", learners=("logistic",))
     assert not result["test_opened"]
+    model = result["models"]["logistic"]
+    assert model["raw_probability_quality"]["probability_calibration"].startswith("none;")
+    assert model["calibrated_probability_quality"]["probability_calibration"].startswith("sigmoid;")
     assert (tmp_path / "run/logistic/policy.json").exists()
 
 

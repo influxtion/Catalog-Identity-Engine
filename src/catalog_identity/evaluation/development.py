@@ -125,7 +125,7 @@ def develop(
             "reject_threshold": reject_threshold,
             "classification": classification_metrics(y, prediction),
             "raw_probability_quality": probability_metrics(y, raw),
-            "calibrated_probability_quality": probability_metrics(y, p),
+            "calibrated_probability_quality": probability_metrics(y, p, "sigmoid"),
         }
         report["models"][learner] = metrics
     write_json(output / "validation.json", report)

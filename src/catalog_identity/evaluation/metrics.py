@@ -25,7 +25,9 @@ def classification_metrics(labels: np.ndarray, predictions: np.ndarray) -> dict:
     }
 
 
-def probability_metrics(labels: np.ndarray, probabilities: np.ndarray) -> dict:
+def probability_metrics(
+    labels: np.ndarray, probabilities: np.ndarray, calibration_method: str = "none"
+) -> dict:
     if labels.shape != probabilities.shape or labels.ndim != 1 or not len(labels):
         raise ValueError("nonempty, aligned one-dimensional labels and probabilities required")
     if not np.isin(labels, [0, 1]).all():
@@ -60,5 +62,5 @@ def probability_metrics(labels: np.ndarray, probabilities: np.ndarray) -> dict:
         else None,
         "reliability_bins": bins,
         "precision_recall_curve": curve,
-        "probability_calibration": "none; reliability is measured, not assumed",
+        "probability_calibration": f"{calibration_method}; reliability is measured, not assumed",
     }
