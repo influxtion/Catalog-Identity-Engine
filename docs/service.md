@@ -10,7 +10,7 @@ PowerShell setup (use `export NAME=value` on Linux/macOS):
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://catalog:catalog_local@localhost:5432/catalog"
 # Optional: load the validation-selected benchmark matcher for pair inspection.
-$env:CATALOG_MODEL_DIR = "runs/development-v3/logistic"
+$env:CATALOG_MODEL_DIR = "runs/development/logistic"
 uv run catalog-identity seed-showcase
 uv run catalog-identity serve
 ```
@@ -56,6 +56,8 @@ Unknown variant attributes abstain. A review cannot override conflicting or miss
 variant-defining evidence; correct the listing first. A rejection is a cannot-link constraint
 checked across proposed merged groups, so an indirect path cannot bypass it. Reviews require
 the listing revisions the reviewer saw and become stale when either record changes.
+A family match leaves an unresolved variant in the review queue. Accepting an exact variant
+requires resolving any active family rejection first.
 
 Structured generation is bounded to 500 listings per brand/model block, with an explicit
 error beyond that size. Supply a bounded candidate graph for larger blocks. Live lexical

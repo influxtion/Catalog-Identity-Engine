@@ -1,33 +1,37 @@
 {
-  "synthetic": true,
-  "scope": "Lexical retrieval only; no accuracy or end-to-end service scaling claim.",
   "memory_scope": "Sampled process RSS at 5 ms intervals, including interpreter and imported libraries. Not an exact peak.",
   "runs": [
     {
-      "build_listings_per_second": 13595.601551681144,
-      "build_seconds_including_vocabulary": 0.07355319999624044,
+      "build_listings_per_second": 13855.846541346893,
+      "build_seconds_including_vocabulary": 0.07217170001240447,
       "listings": 1000,
       "queries": 100,
-      "queries_per_second": 108.91516360600725,
-      "query_p50_ms": 8.929149989853613,
-      "query_p95_ms": 9.949350015085656,
+      "queries_per_second": 107.70518592883049,
+      "query_p50_ms": 8.991599999717437,
+      "query_p95_ms": 10.223254984884987,
       "returned_candidates": 5000,
-      "rss_before_bytes": 141508608,
-      "sampled_peak_rss_bytes": 149393408,
+      "rss_before_bytes": 141361152,
+      "sampled_peak_rss_bytes": 148463616,
       "sparse_matrix_bytes": 1138076
     },
     {
-      "build_listings_per_second": 12147.484553746986,
-      "build_seconds_including_vocabulary": 0.823215699987486,
+      "build_listings_per_second": 12117.676697502295,
+      "build_seconds_including_vocabulary": 0.8252406999818049,
       "listings": 10000,
       "queries": 100,
-      "queries_per_second": 7.4129297107734695,
-      "query_p50_ms": 126.93519997992553,
-      "query_p95_ms": 180.85777998494447,
+      "queries_per_second": 7.277918042693569,
+      "query_p50_ms": 132.9299000062747,
+      "query_p95_ms": 186.36879499972565,
       "returned_candidates": 5000,
-      "rss_before_bytes": 149463040,
-      "sampled_peak_rss_bytes": 207699968,
+      "rss_before_bytes": 148533248,
+      "sampled_peak_rss_bytes": 209641472,
       "sparse_matrix_bytes": 11742032
     }
-  ]
+  ],
+  "scope": "Lexical retrieval only; no accuracy or end-to-end service scaling claim.",
+  "source_code": {
+    "commit": "46025296873f362d2410a561fea5d36d355c1fd4",
+    "working_tree_status": ""
+  },
+  "synthetic": true
 }

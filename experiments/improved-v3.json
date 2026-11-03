@@ -94,7 +94,7 @@
     "probability_quality": {
       "average_precision": 0.5234547697601936,
       "brier_score": 0.07996329243310778,
-      "probability_calibration": "none; reliability is measured, not assumed",
+      "probability_calibration": "sigmoid; reliability is measured, not assumed",
       "reliability_bins": [
         {
           "count": 2397,
@@ -220,6 +220,24 @@
     },
     "synthetic": false,
     "test_sha256": "258f9b408e715410f07480bf4ad39788a10d5cee1512e322091de43dafae1297"
+  },
+  "metadata_corrections": [
+    "Corrected legacy probability_calibration metadata from none to sigmoid in calibrated blocks. Numeric scores and metrics are unchanged."
+  ],
+  "postprocessed_frozen_pipeline": {
+    "metrics": {
+      "f1": 0.14545454545454545,
+      "false_negatives": 460,
+      "false_positives": 10,
+      "k": 50,
+      "pairs": 4500,
+      "precision": 0.8,
+      "recall": 0.08,
+      "true_negatives": 3990,
+      "true_positives": 40
+    },
+    "note": "Computed from the original saved decisions and retrieval ranks, without refitting or rescoring.",
+    "source_pairs_sha256": "a932fb9b216cb8cd8894eb416bb5b6e8f9eebe5bd75dcfa3335c4329c47364a9"
   },
   "retrieval_validation": {
     "channels": {
@@ -376,7 +394,7 @@
         "calibrated_probability_quality": {
           "average_precision": 0.8116980868927924,
           "brier_score": 0.12418826139371257,
-          "probability_calibration": "none; reliability is measured, not assumed",
+          "probability_calibration": "sigmoid; reliability is measured, not assumed",
           "reliability_bins": [
             {
               "count": 339,
@@ -551,7 +569,7 @@
         "calibrated_probability_quality": {
           "average_precision": 0.7641349030092118,
           "brier_score": 0.14211674365018967,
-          "probability_calibration": "none; reliability is measured, not assumed",
+          "probability_calibration": "sigmoid; reliability is measured, not assumed",
           "reliability_bins": [
             {
               "count": 341,

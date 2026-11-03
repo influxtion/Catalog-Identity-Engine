@@ -3,8 +3,10 @@
 Resolve product listings across stores, with reproducible experiments and inspectable evidence.
 Independent project inspired by public catalog-matching research; not affiliated with Shopify.
 
-The working baseline includes typed ingestion, conservative normalization, candidate retrieval,
-logistic pair scoring, and reproducible evaluation with an offline demo.
+The local research system includes typed ingestion, lexical and semantic retrieval, calibrated
+logistic/LightGBM experiments, constrained identities, persistence, a FastAPI service, and a
+Next.js inspection dashboard. Its measured matcher accuracy does not yet support the intended
+high-precision automatic matching.
 Product-family and exact-variant identity are distinct concepts. WDC's binary entity labels must
 not be treated as hierarchical family/variant annotations.
 
@@ -54,7 +56,58 @@ The example uses 80% corner cases, small development size, and 100% unseen test 
 Its paths match the original archive filenames. The loader enforces disjoint offer
 IDs; the 100% unseen configuration additionally requires a disjoint test entity set.
 
-## What a run produces
+## Improve and evaluate the matcher
+
+```sh
+uv sync --locked --extra dev --extra models --extra semantic --extra server --extra benchmarks
+uv run catalog-identity develop --config configs/wdc-products.example.json --output runs/development
+uv run catalog-identity retrieval-ablation --config configs/wdc-products.example.json --output runs/retrieval --allow-model-download
+# Freeze the model and retrieval choice using validation before opening test.
+uv run catalog-identity evaluate-frozen --config configs/wdc-products.example.json --model runs/development/logistic --hybrid --output runs/frozen
+```
+
+`develop` compares enriched logistic regression and LightGBM without reading test data. It
+partitions validation entities between calibration and operating-threshold selection. The
+semantic command explicitly permits a pinned MiniLM weight download; subsequent runs use the
+local cache. No product images are downloaded. Semantic dependencies include PyTorch and are
+optional for the service and lexical baseline.
+
+See [the development protocol](docs/development.md) for partition weighting, model selection,
+negative-pair ablations, and the limits of these scores.
+
+## Run the local dashboard
+
+Install the `server` extra above, then use three terminals from the repository root:
+
+```sh
+# First terminal; defaults to catalog.db with original fictional records.
+uv run catalog-identity seed-showcase
+uv run catalog-identity serve
+```
+
+```sh
+# Second terminal; processes rebuilds and evaluation jobs.
+uv run catalog-identity worker
+```
+
+```sh
+# Third terminal; Node 24 and npm are used in CI.
+cd frontend
+npm ci
+npm run dev
+```
+
+Open [the dashboard](http://localhost:3000) and [API documentation](http://127.0.0.1:8000/docs).
+Search listings or identity IDs, select a family or variant group, inspect pair evidence,
+record reviews, and view graph links and measured evaluation costs. The default service uses
+structured identity rules and shows no invented model probability. To load the trained
+benchmark matcher or use PostgreSQL, follow [service setup](docs/service.md). Benchmark scores
+never supply hierarchical family/variant probabilities.
+
+[Frontend instructions](frontend/README.md) cover the proxy, build, and isolated browser tests.
+This developer service has no authentication or tenant isolation; keep it local.
+
+## What an original baseline run produces
 
 | File | Contents |
 | --- | --- |
@@ -93,28 +146,56 @@ retains the original record and a transformation log. Invalid GTIN checksums are
 excluded from identifier lookup. Model punctuation is handled conservatively; unknown values
 are not agreements. Brand aliases are explicit configuration of the normalization function.
 
-## Scope and next steps
+## Measured results and limitations
 
-Implemented: ingestion and profiling, official split loading, normalization, identifier/TF-IDF
-candidate union, logistic baseline, threshold selection, reports, tests and CI.
+On WDC Products with 80% corner cases, small development size, and 100% unseen test entities:
 
-Next: evaluate hard negatives and retrieval misses on validation data, compare semantic retrieval
-and LightGBM, calibrate probabilities, then build conflict-aware family/variant clustering with
-its own labeled fixtures. Persistence, API, review dashboard and scale benchmarks follow those
-steps. No clustering, live service, dashboard, or production-quality accuracy is claimed yet.
+| Measure | Original baseline | Enriched model + hybrid retrieval |
+| --- | ---: | ---: |
+| Test average precision | 0.46231 | 0.52345 |
+| Test automatic-match precision | Undefined (no matches) | 80.0% |
+| Test automatic-match recall | 0.0% | 8.0% |
+| Directed retrieval recall@50 | 99.4% | 99.6% |
 
-The current retriever uses sparse per-query products, avoiding a dense all-pairs matrix. It is
-an exact baseline for benchmark-sized populations; it is not an ANN index or a 100k-listing
-scaling result. Evidence features describe observations, not causal explanations of a match.
+The enriched model produced 40 true and 10 false matches at its frozen validation-selected
+threshold. **The 99% precision aspiration is not met.** The test has 1,000 offers, not a full
+commercial catalog. [Experiment records](experiments/README.md) include counts, hashes,
+model comparisons, calibration, retrieval ablations, and reproduction commands.
 
-## First measured result
+Hierarchical clustering uses category-specific rules, complete cross-cluster support, and
+hard-conflict/human-rejection constraints. Unknown variant attributes abstain. Its synthetic
+results are not real-world cluster accuracy. Incremental changes invalidate evidence and
+reconcile opaque IDs after a small-catalog rebuild; this is not a streaming implementation.
 
-On WDC Products with 80% corner cases, small development size, and 100% unseen test entities,
-directed retrieval recall@50 was **99.4%** over the 1,000-offer test population. The logistic
-matcher did **not** meet the validation precision/support requirement, so automatic matching
-was disabled. The test average precision was 0.46231. This is a starting baseline, not a
-production-ready matcher. See [the experiment record](experiments/README.md) for counts,
-limitations, hashes, and reproduction instructions.
+```sh
+uv run catalog-identity cluster-showcase --output runs/clusters
+uv run catalog-identity incremental-showcase --output runs/updates
+uv run catalog-identity benchmark-scale --sizes 1000 10000 --queries 100 --output runs/scaling
+uv run catalog-identity develop --config configs/wdc-products.example.json --negative-policy random_only --output runs/random-negatives
+```
+
+Scaling measurements cover lexical retrieval on synthetic populations through 10,000 listings.
+The live candidate endpoint rebuilds its index per request; the dashboard loads at most 200
+listings. Structured graph generation is capped at 500 listings per brand/model block.
+There is no 100k service claim, real human-labeled hierarchical evaluation, image experiment,
+or cross-encoder result. Larger-corpus ingestion and production indexing remain future work.
+
+## Verification
+
+```sh
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+cd frontend
+npm run build
+npm run typecheck
+npx playwright install chromium
+npm run test:e2e
+```
+
+CI runs Python 3.11/3.12 on Windows/Linux, PostgreSQL integration, and Chromium dashboard tests.
+The PostgreSQL test skips locally unless `TEST_DATABASE_URL` names a disposable test database.
+Browser tests start their own API and production dashboard with an isolated synthetic database.
 
 Read [PROJECT_SPEC.md](PROJECT_SPEC.md) for the full design and
 [docs/datasets.md](docs/datasets.md) for benchmark semantics and data restrictions.

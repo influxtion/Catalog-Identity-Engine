@@ -28,7 +28,8 @@ and an entity-overlap audit. Never randomly split the pair rows.
 The [WDC Product Data Corpus v2](https://webdatacommons.org/largescaleproductcorpus/v2/index.html)
 has its own schema, derived from older crawl data. It is not WDC Products. Unlabeled
 corpus experiments can measure retrieval cost and throughput, not matching accuracy.
-No corpus adapter or scale result is claimed by this initial baseline.
+A corpus adapter is not implemented. Current cost measurements use separately generated
+synthetic listings through 10,000 records; they do not represent corpus scale or accuracy.
 
 ## Licensing and redistribution
 
