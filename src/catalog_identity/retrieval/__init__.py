@@ -28,6 +28,8 @@ class Candidate:
     rank: int
     sources: tuple[str, ...]
     text_score: float
+    semantic_score: float | None = None
+    fusion_score: float | None = None
 
 
 class CandidateIndex:

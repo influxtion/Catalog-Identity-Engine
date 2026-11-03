@@ -81,14 +81,14 @@ class LearnedMatcher:
     def predict(self, split: BenchmarkSplit, calibrated=True):
         return self.score_features(self.features.split(split), calibrated)
 
-    def calibrate(self, validation: BenchmarkSplit):
+    def calibrate(self, validation: BenchmarkSplit, sample_weights=None):
         if validation.name != "validation":
             raise ValueError("calibration requires validation records")
         y = np.array([p.label for p in validation.pairs])
         if set(y.tolist()) != {0, 1}:
             raise ValueError("calibration requires both classes")
         x = logit(self.predict(validation, calibrated=False)).reshape(-1, 1)
-        model = LogisticRegression(C=1.0).fit(x, y)
+        model = LogisticRegression(C=1.0).fit(x, y, sample_weight=sample_weights)
         if model.coef_[0, 0] <= 0:
             raise ValueError("calibration would reverse score ordering; inspect validation data")
         self.calibration = {

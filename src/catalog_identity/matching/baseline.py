@@ -59,6 +59,7 @@ def select_match_threshold(
     probabilities: np.ndarray,
     target_precision: float = 0.99,
     minimum_matches: int = 5,
+    sample_weights: np.ndarray | None = None,
 ) -> ThresholdSelection:
     """Maximize validation recall subject to empirical precision and support.
 
@@ -73,16 +74,21 @@ def select_match_threshold(
         raise ValueError("labels must be binary")
     if not np.isfinite(probabilities).all() or ((probabilities < 0) | (probabilities > 1)).any():
         raise ValueError("invalid probabilities")
-    positives = int(labels.sum())
+    weights = np.ones(len(labels)) if sample_weights is None else np.asarray(sample_weights)
+    if weights.shape != labels.shape or not np.isfinite(weights).all() or (weights <= 0).any():
+        raise ValueError("sample weights must be positive, finite and aligned")
+    positives = float(weights[labels == 1].sum())
     best = ThresholdSelection(None, None, 0.0, 0, target_precision, minimum_matches)
     # Sweep distinct scores once; tied probabilities must enter together.
     order = np.argsort(-probabilities, kind="stable")
-    true_positives = 0
+    true_positives = 0.0
+    predicted_weight = 0.0
     for count, i in enumerate(order, 1):
-        true_positives += int(labels[i])
+        true_positives += int(labels[i]) * weights[i]
+        predicted_weight += weights[i]
         if count < len(order) and probabilities[order[count]] == probabilities[i]:
             continue
-        precision = true_positives / count
+        precision = true_positives / predicted_weight
         recall = true_positives / positives if positives else 0.0
         if (
             count >= minimum_matches

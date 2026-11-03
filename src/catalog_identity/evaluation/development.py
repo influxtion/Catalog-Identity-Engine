@@ -8,7 +8,8 @@ import numpy as np
 
 from catalog_identity.evaluation.config import RunConfig
 from catalog_identity.evaluation.metrics import classification_metrics, probability_metrics
-from catalog_identity.evaluation.runner import file_hash, git_metadata, write_json
+from catalog_identity.evaluation.provenance import implementation_manifest
+from catalog_identity.evaluation.runner import file_hash, write_json
 from catalog_identity.ingestion.loaders import BenchmarkSplit, load_wdc_pairs
 from catalog_identity.matching.baseline import select_match_threshold
 from catalog_identity.matching.learned import LearnedMatcher
@@ -57,20 +58,26 @@ def develop(config: RunConfig, output: Path, learners=("logistic", "lightgbm")) 
         - len(calibration.pairs)
         - len(policy.pairs),
         "inputs": {"train": file_hash(config.train), "validation": file_hash(config.validation)},
-        "git": git_metadata(Path(__file__).resolve().parents[3]),
+        "implementation": implementation_manifest(),
+        "partition_weighting": (
+            "Positive weight 1, negative weight 2 corrects unequal inclusion probabilities. "
+            "Classification counts and probability diagnostics describe the retained subset."
+        ),
         "models": {},
     }
     y = np.array([p.label for p in policy.pairs])
+    policy_weights = np.where(y == 1, 1.0, 2.0)
+    calibration_weights = np.array([1.0 if p.label else 2.0 for p in calibration.pairs])
     for learner in learners:
         model = LearnedMatcher(learner=learner, seed=config.seed).fit(train)
         raw = model.predict(policy, calibrated=False)
-        model.calibrate(calibration)
+        model.calibrate(calibration, calibration_weights)
         p = model.predict(policy)
         selection = select_match_threshold(
-            y, p, config.target_precision, config.minimum_validation_matches
+            y, p, config.target_precision, config.minimum_validation_matches, policy_weights
         )
         rejection = select_match_threshold(
-            1 - y, 1 - p, config.target_precision, config.minimum_validation_matches
+            1 - y, 1 - p, config.target_precision, config.minimum_validation_matches, policy_weights
         )
         reject_threshold = 1 - rejection.threshold if rejection.threshold is not None else None
         if (

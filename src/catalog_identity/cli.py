@@ -21,12 +21,32 @@ def main(argv: list[str] | None = None) -> int:
     development = commands.add_parser("develop", help="Compare matchers using validation only")
     development.add_argument("--config", type=Path, required=True)
     development.add_argument("--output", type=Path, required=True)
+    ablation = commands.add_parser("retrieval-ablation", help="Compare retrieval on validation")
+    ablation.add_argument("--config", type=Path, required=True)
+    ablation.add_argument("--output", type=Path, required=True)
+    ablation.add_argument("--allow-model-download", action="store_true")
     profiling = commands.add_parser(
         "profile", help="Validate and profile canonical CSV/JSONL listings"
     )
     profiling.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command == "retrieval-ablation":
+            from catalog_identity.evaluation.retrieval_ablation import retrieval_ablation
+
+            report = retrieval_ablation(
+                load_config(args.config), args.output, args.allow_model_download
+            )
+            print(
+                json.dumps(
+                    {
+                        name: value["labeled_pair_recall_at_k"]
+                        for name, value in report["channels"].items()
+                    },
+                    indent=2,
+                )
+            )
+            return 0
         if args.command == "develop":
             from catalog_identity.evaluation.development import develop
 
