@@ -25,12 +25,23 @@ def main(argv: list[str] | None = None) -> int:
     ablation.add_argument("--config", type=Path, required=True)
     ablation.add_argument("--output", type=Path, required=True)
     ablation.add_argument("--allow-model-download", action="store_true")
+    frozen = commands.add_parser("evaluate-frozen", help="Evaluate a saved model without refitting")
+    frozen.add_argument("--config", type=Path, required=True)
+    frozen.add_argument("--model", type=Path, required=True)
+    frozen.add_argument("--output", type=Path, required=True)
+    frozen.add_argument("--hybrid", action="store_true")
     profiling = commands.add_parser(
         "profile", help="Validate and profile canonical CSV/JSONL listings"
     )
     profiling.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command == "evaluate-frozen":
+            from catalog_identity.evaluation.frozen import evaluate_frozen
+
+            report = evaluate_frozen(load_config(args.config), args.model, args.output, args.hybrid)
+            print(json.dumps(report["classification"], indent=2))
+            return 0
         if args.command == "retrieval-ablation":
             from catalog_identity.evaluation.retrieval_ablation import retrieval_ablation
 
