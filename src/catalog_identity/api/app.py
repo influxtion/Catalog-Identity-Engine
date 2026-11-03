@@ -71,12 +71,7 @@ def create_app(database_url=None, model_directory=None):
 
     @app.post("/listings", status_code=201)
     def ingest(request: IngestRequest):
-        result = call(catalog.ingest, request.listings)
-        if result["changed"]:
-            result["job"] = call(
-                catalog.enqueue, "rebuild", idempotency_key=f"rebuild-{result['catalog_revision']}"
-            )
-        return result
+        return call(catalog.ingest, request.listings, enqueue_rebuild=True)
 
     @app.get("/listings")
     def search(q: str = "", limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)):
@@ -112,9 +107,7 @@ def create_app(database_url=None, model_directory=None):
 
     @app.post("/reviews", status_code=201)
     def review(request: ReviewRequest):
-        result = call(catalog.submit_review, **request.model_dump())
-        call(catalog.enqueue, "rebuild", idempotency_key=f"review-{result['id']}")
-        return result
+        return call(catalog.submit_review, **request.model_dump(), enqueue_rebuild=True)
 
     @app.get("/jobs")
     def jobs():

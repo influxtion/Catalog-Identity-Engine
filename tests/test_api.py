@@ -149,6 +149,36 @@ def test_search_retrieval_and_bad_requests(client):
     assert client.get("/openapi.json").status_code == 200
 
 
+def test_queue_failure_rolls_back_ingestion_and_review(client, monkeypatch):
+    catalog = client.app.state.catalog
+
+    def unavailable(*args, **kwargs):
+        raise RuntimeError("queue write failed")
+
+    monkeypatch.setattr(catalog, "_enqueue", unavailable)
+    records = showcase()[:2]
+    with pytest.raises(RuntimeError, match="queue write failed"):
+        client.post("/listings", json={"listings": [x.model_dump() for x in records]})
+    assert catalog.search() == []
+    assert catalog.overview()["catalog_revision"] == 0
+    catalog.ingest(records)
+    revision = catalog.overview()["catalog_revision"]
+    with pytest.raises(RuntimeError, match="queue write failed"):
+        catalog.submit_review(
+            records[0].key,
+            records[1].key,
+            "variant",
+            "match",
+            "Verified",
+            1,
+            1,
+            enqueue_rebuild=True,
+        )
+    with catalog.db.transaction() as connection:
+        assert connection.execute(select(tables.reviews)).first() is None
+    assert catalog.overview()["catalog_revision"] == revision
+
+
 def test_database_survives_reopen(tmp_path):
     url = "sqlite:///" + str(tmp_path / "catalog.db")
     db = Database(url)

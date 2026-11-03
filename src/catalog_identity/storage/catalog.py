@@ -82,7 +82,7 @@ class Catalog:
             update(tables.state).where(tables.state.c.key == "catalog").values(data=state)
         )
 
-    def ingest(self, records):
+    def ingest(self, records, enqueue_rebuild=False):
         records = [
             Listing.model_validate(record) if isinstance(record, dict) else record
             for record in records
@@ -139,12 +139,17 @@ class Catalog:
                 )
                 state.update(revision=state["revision"] + 1, identities_stale=True)
                 self._save_state(connection, state)
-            return {
+            result = {
                 "changed": len(changed),
                 "unchanged": len(records) - len(changed),
                 "listing_ids": [x.key for x in records],
                 "catalog_revision": state["revision"],
             }
+            if changed and enqueue_rebuild:
+                result["job"] = self._enqueue(
+                    connection, "rebuild", idempotency_key=f"rebuild-{state['revision']}"
+                )
+            return result
 
     def listing(self, key):
         with self.db.transaction() as connection:
@@ -297,7 +302,17 @@ class Catalog:
             )
         return result
 
-    def submit_review(self, left, right, level, decision, note, left_revision, right_revision):
+    def submit_review(
+        self,
+        left,
+        right,
+        level,
+        decision,
+        note,
+        left_revision,
+        right_revision,
+        enqueue_rebuild=False,
+    ):
         if (
             left == right
             or level not in ("family", "variant")
@@ -363,6 +378,8 @@ class Catalog:
             state = self._state(connection)
             state.update(revision=state["revision"] + 1, identities_stale=True)
             self._save_state(connection, state)
+            if enqueue_rebuild:
+                self._enqueue(connection, "rebuild", idempotency_key=f"review-{review['id']}")
             return review
 
     def rebuild(self):
@@ -523,34 +540,37 @@ class Catalog:
             ]
 
     def enqueue(self, kind, payload=None, idempotency_key=None):
+        with self.db.transaction() as connection:
+            return self._enqueue(connection, kind, payload, idempotency_key)
+
+    def _enqueue(self, connection, kind, payload=None, idempotency_key=None):
         if kind not in ("rebuild", "evaluate"):
             raise ValueError("unknown job kind")
         payload = payload or {}
-        with self.db.transaction() as connection:
-            if idempotency_key:
-                existing = (
-                    connection.execute(
-                        select(tables.jobs).where(tables.jobs.c.idempotency_key == idempotency_key)
-                    )
-                    .mappings()
-                    .first()
+        if idempotency_key:
+            existing = (
+                connection.execute(
+                    select(tables.jobs).where(tables.jobs.c.idempotency_key == idempotency_key)
                 )
-                if existing:
-                    if existing["kind"] != kind or existing["payload"] != payload:
-                        raise Conflict("idempotency key already used for different work")
-                    return dict(existing)
-            job = dict(
-                id=str(uuid4()),
-                kind=kind,
-                payload=payload,
-                status="pending",
-                idempotency_key=idempotency_key,
-                created_at=timestamp(),
-                result=None,
-                error=None,
+                .mappings()
+                .first()
             )
-            connection.execute(insert(tables.jobs).values(**job))
-            return job
+            if existing:
+                if existing["kind"] != kind or existing["payload"] != payload:
+                    raise Conflict("idempotency key already used for different work")
+                return dict(existing)
+        job = dict(
+            id=str(uuid4()),
+            kind=kind,
+            payload=payload,
+            status="pending",
+            idempotency_key=idempotency_key,
+            created_at=timestamp(),
+            result=None,
+            error=None,
+        )
+        connection.execute(insert(tables.jobs).values(**job))
+        return job
 
     def claim_job(self):
         with self.db.transaction() as connection:
