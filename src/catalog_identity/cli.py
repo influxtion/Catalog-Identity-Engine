@@ -18,12 +18,26 @@ def main(argv: list[str] | None = None) -> int:
     evaluate = commands.add_parser("evaluate", help="Evaluate official local WDC pair files")
     evaluate.add_argument("--config", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
+    development = commands.add_parser("develop", help="Compare matchers using validation only")
+    development.add_argument("--config", type=Path, required=True)
+    development.add_argument("--output", type=Path, required=True)
     profiling = commands.add_parser(
         "profile", help="Validate and profile canonical CSV/JSONL listings"
     )
     profiling.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command == "develop":
+            from catalog_identity.evaluation.development import develop
+
+            report = develop(load_config(args.config), args.output)
+            print(
+                json.dumps(
+                    {name: value["classification"] for name, value in report["models"].items()},
+                    indent=2,
+                )
+            )
+            return 0
         if args.command == "profile":
             print(json.dumps(profile(load_listings(args.input)), indent=2))
             return 0
