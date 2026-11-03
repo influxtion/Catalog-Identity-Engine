@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 from catalog_identity.normalization import NormalizedListing
 
-POLICY_VERSION = "1"
+POLICY_VERSION = "2"
+CONDITIONAL_VARIANT_FIELDS = ("pack_count", "region", "compatibility")
 VARIANT_FIELDS = {
     "headphones": ("color",),
     "phone": ("color", "capacity"),
@@ -38,7 +39,18 @@ def compare_identity(a: NormalizedListing, b: NormalizedListing) -> HierarchyEvi
         return HierarchyEvidence("unknown", "unknown", "uncertain", (), family_missing)
     if not a.category or a.category != b.category or a.category not in VARIANT_FIELDS:
         return HierarchyEvidence("same", "unknown", "uncertain", (), ("category_policy",))
-    fields = VARIANT_FIELDS[a.category]
+    fields = tuple(
+        dict.fromkeys(
+            (
+                *VARIANT_FIELDS[a.category],
+                *(
+                    field
+                    for field in CONDITIONAL_VARIANT_FIELDS
+                    if a.attributes.get(field) or b.attributes.get(field)
+                ),
+            )
+        )
+    )
     conflicts = tuple(
         f"attribute:{field}"
         for field in fields

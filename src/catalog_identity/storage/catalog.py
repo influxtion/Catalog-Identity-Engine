@@ -9,7 +9,7 @@ from uuid import uuid4
 from sqlalchemy import delete, insert, or_, select, update
 
 from catalog_identity.clustering.engine import Edge, cluster, structured_edges
-from catalog_identity.clustering.policy import compare_identity
+from catalog_identity.clustering.policy import POLICY_VERSION, compare_identity
 from catalog_identity.clustering.registry import IdentityRegistry
 from catalog_identity.matching.features import pair_features
 from catalog_identity.normalization import normalize, normalize_text
@@ -38,7 +38,7 @@ class Catalog:
     def __init__(self, database, model_directory: Path | None = None):
         self.db = database
         self.model = None
-        self.model_id = "structured-evidence-v1"
+        self.model_id = f"structured-evidence-v{POLICY_VERSION}"
         self.policy = None
         self._retrieval_lock = Lock()
         self._retrieval_cache = None
@@ -52,6 +52,28 @@ class Catalog:
                 {p.name: file_hash(p) for p in sorted(model_directory.iterdir()) if p.is_file()}
             )
         with self.db.transaction() as connection:
+            state = self._state(connection)
+            if state.get("identity_policy_version") not in (None, "1", POLICY_VERSION):
+                raise ValueError("unsupported identity policy version")
+            if state.get("identity_policy_version") != POLICY_VERSION:
+                if state["revision"]:
+                    state.update(revision=state["revision"] + 1, identities_stale=True)
+                    connection.execute(update(tables.pairs).values(stale=True))
+                    connection.execute(
+                        update(tables.reviews)
+                        .where(
+                            (tables.reviews.c.level == "variant")
+                            & (tables.reviews.c.decision == "match")
+                        )
+                        .values(stale=True)
+                    )
+                    self._enqueue(
+                        connection,
+                        "rebuild",
+                        idempotency_key=f"policy-{POLICY_VERSION}-{state['revision']}",
+                    )
+                state["identity_policy_version"] = POLICY_VERSION
+                self._save_state(connection, state)
             if (
                 connection.execute(
                     select(tables.models).where(tables.models.c.id == self.model_id)

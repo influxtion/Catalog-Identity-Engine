@@ -191,6 +191,29 @@ def test_database_survives_reopen(tmp_path):
     other.close()
 
 
+def test_policy_upgrade_invalidates_acceptances_but_preserves_rejections(client):
+    catalog = client.app.state.catalog
+    records = showcase()
+    seed(catalog)
+    catalog.submit_review(
+        records[0].key, records[1].key, "family", "reject", "Verified different", 1, 1
+    )
+    catalog.submit_review(records[2].key, records[3].key, "variant", "match", "Verified same", 1, 1)
+    with catalog.db.transaction() as connection:
+        state = catalog._state(connection)
+        state["identity_policy_version"] = "1"
+        catalog._save_state(connection, state)
+    updated = Catalog(catalog.db)
+    revision = updated.overview()["catalog_revision"]
+    assert updated.overview()["identities_stale"]
+    assert len(updated.jobs()) == 1
+    with catalog.db.transaction() as connection:
+        reviews = connection.execute(select(tables.reviews)).mappings().all()
+        assert all(row["stale"] == (row["decision"] == "match") for row in reviews)
+        assert all(connection.execute(select(tables.pairs.c.stale)).scalars())
+    assert Catalog(catalog.db).overview()["catalog_revision"] == revision
+
+
 def test_retrieval_cache_tracks_changes_from_another_catalog(tmp_path, monkeypatch):
     from catalog_identity.retrieval import CandidateIndex
 

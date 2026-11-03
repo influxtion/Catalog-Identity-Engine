@@ -52,6 +52,14 @@ variant rules. Benchmark scores remain separate evidence. They are **not** famil
 probabilities and never drive automatic hierarchical merges. All showcase products and labels
 are original synthetic examples, not a human-annotated real-world evaluation.
 
+Identity policy v2 also compares pack count, region and compatibility when either listing
+supplies them. A conflict separates variants; a one-sided value abstains. If neither supplies
+these fields, the category's configured requirements apply; this is not proof that every
+possible real-world distinction is known. Upgrading the policy atomically marks old pair
+evidence and variant acceptances stale and queues a rebuild, preserving human rejections.
+API ingestion and review changes commit with their rebuild job in one transaction. Direct
+Python callers can request the same behavior with `enqueue_rebuild=True`.
+
 Unknown variant attributes abstain. A review cannot override conflicting or missing
 variant-defining evidence; correct the listing first. A rejection is a cannot-link constraint
 checked across proposed merged groups, so an indirect path cannot bypass it. Reviews require

@@ -51,6 +51,25 @@ def test_unknown_variant_attributes_and_categories_abstain():
     assert compare_identity(a, record("c", category="unknown")).variant == "unknown"
 
 
+@pytest.mark.parametrize(
+    "field,left,right",
+    [("pack_count", "1", "2"), ("region", "EU", "US"), ("compatibility", "A10", "A11")],
+)
+def test_supplied_variant_dimensions_conflict_or_abstain(field, left, right):
+    original = record("a").original
+    a = normalize(original.model_copy(update={"attributes": {"color": "black", field: left}}))
+    b = normalize(
+        original.model_copy(
+            update={"source_id": "b", "attributes": {"color": "black", field: right}}
+        )
+    )
+    evidence = compare_identity(a, b)
+    assert evidence.family == "same" and evidence.variant == "different"
+    assert f"attribute:{field}" in evidence.conflicts
+    assert compare_identity(a, record("c")).variant == "unknown"
+    assert compare_identity(record("a"), record("b")).variant == "same"
+
+
 def test_complete_cross_cluster_support_is_required():
     a, b, c = record("a"), record("b"), record("c")
     result = cluster(
