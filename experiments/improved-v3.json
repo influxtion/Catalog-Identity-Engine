@@ -1,0 +1,733 @@
+{
+  "frozen_test": {
+    "classification": {
+      "f1": 0.14545454545454545,
+      "false_negatives": 460,
+      "false_positives": 10,
+      "pairs": 4500,
+      "precision": 0.8,
+      "recall": 0.08,
+      "true_negatives": 3990,
+      "true_positives": 40
+    },
+    "implementation": {
+      "dependencies": {
+        "faiss-cpu": "1.15.1",
+        "lightgbm": "4.7.0",
+        "numpy": "2.5.4",
+        "scikit-learn": "1.9.1",
+        "sentence-transformers": "5.7.0"
+      },
+      "git": {
+        "commit": "dd5656c1cbc318450a15b25380b9976ca766e181",
+        "working_tree_status": ""
+      },
+      "lock_sha256": "12ed36b67fddd30d526f6733a284ce028bd4a6ec490e08e0b74c030eb5d9484a",
+      "source_sha256": {
+        "__init__.py": "bd940e7034c9701c400f8c858a9327eb82f81ba780d29faa2589e7769225e0c8",
+        "cli.py": "de95500238632ebcd2d60c30b1543357025c4dece87d6ee35a72330d5af19d52",
+        "clustering/__init__.py": "920770d5e9bc5b332593ad3c3c744685ef951f1e04cda6a8fa453f567bd7f9d1",
+        "clustering/engine.py": "96bd4223f40195cf4ad3cc909ed414a277f5740818ee53b62d1b78bbf7543369",
+        "clustering/policy.py": "30622d895491a98a22b39f4c53e6c50af6b01ff6c61cd33cebcb0b1e38a71f53",
+        "clustering/registry.py": "4fee5194f0a72ea4507c5d842e11dfaf00483249614f2afa5e6d93a06a9ad866",
+        "evaluation/__init__.py": "485db8519fd089d9a8a13171c30ce18b59865f851434e3d063b5f50dad668d26",
+        "evaluation/clusters.py": "e9cbd6cfc4e83fe7561be7623c953732dd96be2caecda6b13d0f599225084438",
+        "evaluation/config.py": "477994b0f3755a26be5ee3013b6a055553a640849555d65b100bfca5c60068c5",
+        "evaluation/development.py": "7ce9e329fa23fb1859cfe4ff5cf1e9b7945750794d1f6446def317671c488848",
+        "evaluation/frozen.py": "2f67ed9f1711084b34e272ef88fe2e90d5e8d6bf6d2864d454352ec782a2f677",
+        "evaluation/metrics.py": "a39471d4b07210bd1687ea8de9d911fbc3a3fc0270053aa9cdde1a5c9cdb133e",
+        "evaluation/provenance.py": "9b7eade36a43e3e71f0dcfa1ea643f4aef608141ab0c6c687377bda884e3821d",
+        "evaluation/retrieval_ablation.py": "d3efb115bb7b85f2e0b47ef2bce7afc0faf067afabdc95cc22f53e9d2a85fd10",
+        "evaluation/runner.py": "9a95998180bcb1e8b7c6b09c85476d166c1e48cba94323c8cda25df293e29e8f",
+        "evaluation/synthetic.py": "2d24afd661278771d6202e0e414de79f12c2789d70776030b2901453eaac809b",
+        "ingestion/__init__.py": "19f1dc169f3a73bd658c834829ada04de6125ccd7704c47ff0450a32b80b364e",
+        "ingestion/audit.py": "557366407f03f8254b6d84be732f8f483224f32be54ef14d0dff4c88eb4cd833",
+        "ingestion/loaders.py": "0680adf4ac0c46fa843381dc4315beedc4187df352deccab5d994e8621780bce",
+        "matching/__init__.py": "7787af7047f7211831820102973fea3fd4d28ff529ae0e17b8468a6c4e3be1dc",
+        "matching/baseline.py": "f4d257ac4bc3a6b0c294f5bbc07a5c6f619b162c13644ec1357b32a6d2897dbb",
+        "matching/enriched.py": "03fe082a8727c022cbcdf5fe7c79ac533978c2bf3fa704db6f8ea4c8eef17af4",
+        "matching/features.py": "d7c303c41747758ad5ea13b5b4c5fa75814165e677339f4bf4977da2e275d6cf",
+        "matching/learned.py": "54bb1be25d1c6c36ad11d6d3982622a81ee1d728683e8a1434d62bf38251172e",
+        "normalization/__init__.py": "1bb45ff2a5e77f8c13aa9a3ba117b3c8a79a6b57a58c613d71195ef039650af5",
+        "retrieval/__init__.py": "5c7f9bf8d6315588675b6244192edd3def53c3d02ee6f9fae414eae4be499498",
+        "retrieval/semantic.py": "218a691103bc7e06f8e3708fc0e21182d82163c4a55ebeb61ed44d1f005ed241",
+        "schema.py": "6d3e37ce5fdbc1c0f5bffa07cbe1493e9a5330f2528f856ab18fead667294572"
+      }
+    },
+    "model_files": {
+      "matcher.json": "0701264d654bdde835dff4c6d9bee08ac1569baa2d85b8532dd4a2f7fe75b501",
+      "policy.json": "ec6518484f539e79daac134a5fe56d002efb31ee81c373b8205b428b1115d0d2",
+      "text-features.json": "424979586709b332b08e31effbed423facd1caafc6b382e52b11c83d19d338e7"
+    },
+    "model_settings": {
+      "learner": "logistic",
+      "n_estimators": 200,
+      "num_leaves": 15,
+      "seed": 42
+    },
+    "phase": "frozen_test_evaluation",
+    "policy": {
+      "identity_level": "benchmark_entity",
+      "inputs": {
+        "train": "1915a92de76ddbf63a6c4d7ff3162df98f505033a8ad12ee7072b78b083d77c6",
+        "validation": "892e8d39cc8230dce5039a4bded16be1237d5c5c37b94a37404226d349ef3df8"
+      },
+      "match": {
+        "minimum_matches": 5,
+        "predicted_matches": 19,
+        "target_precision": 0.99,
+        "threshold": 0.8597742461487005,
+        "validation_precision": 1.0,
+        "validation_recall": 0.07818930041152264
+      },
+      "reject": {
+        "minimum_matches": 5,
+        "predicted_matches": 325,
+        "target_precision": 0.99,
+        "threshold": 0.9269093007767532,
+        "validation_precision": 0.9906832298136646,
+        "validation_recall": 0.6729957805907173
+      },
+      "reject_threshold": 0.07309069922324685,
+      "synthetic": false
+    },
+    "probability_quality": {
+      "average_precision": 0.5234547697601936,
+      "brier_score": 0.07996329243310778,
+      "probability_calibration": "none; reliability is measured, not assumed",
+      "reliability_bins": [
+        {
+          "count": 2397,
+          "lower": 0.0,
+          "mean_probability": 0.03775280876354174,
+          "positive_fraction": 0.01084689194826867,
+          "upper": 0.1
+        },
+        {
+          "count": 656,
+          "lower": 0.1,
+          "mean_probability": 0.14852553553762088,
+          "positive_fraction": 0.08384146341463415,
+          "upper": 0.2
+        },
+        {
+          "count": 445,
+          "lower": 0.2,
+          "mean_probability": 0.2447228548922689,
+          "positive_fraction": 0.1146067415730337,
+          "upper": 0.3
+        },
+        {
+          "count": 306,
+          "lower": 0.3,
+          "mean_probability": 0.3442194869370992,
+          "positive_fraction": 0.19281045751633988,
+          "upper": 0.4
+        },
+        {
+          "count": 212,
+          "lower": 0.4,
+          "mean_probability": 0.44755283199651824,
+          "positive_fraction": 0.25,
+          "upper": 0.5
+        },
+        {
+          "count": 157,
+          "lower": 0.5,
+          "mean_probability": 0.5505318425766488,
+          "positive_fraction": 0.4012738853503185,
+          "upper": 0.6
+        },
+        {
+          "count": 130,
+          "lower": 0.6,
+          "mean_probability": 0.6546837129068293,
+          "positive_fraction": 0.49230769230769234,
+          "upper": 0.7
+        },
+        {
+          "count": 96,
+          "lower": 0.7,
+          "mean_probability": 0.7514496905992308,
+          "positive_fraction": 0.5520833333333334,
+          "upper": 0.8
+        },
+        {
+          "count": 79,
+          "lower": 0.8,
+          "mean_probability": 0.8470832664274056,
+          "positive_fraction": 0.7341772151898734,
+          "upper": 0.9
+        },
+        {
+          "count": 22,
+          "lower": 0.9,
+          "mean_probability": 0.9327094991793164,
+          "positive_fraction": 0.8181818181818182,
+          "upper": 1.0
+        }
+      ]
+    },
+    "retrieval": {
+      "channel_hits": {
+        "semantic": 35223,
+        "tfidf": 35423
+      },
+      "direction": "directed; each gold pair contributes two queries",
+      "embedding_note": "Fixed MiniLM revision; indexed embeddings cached for queries.",
+      "entity_positive_directions": 1000,
+      "entity_recall_at_k": {
+        "10": 0.947,
+        "20": 0.984,
+        "50": 0.996
+      },
+      "faiss_index_bytes": 1807682,
+      "index_build_seconds": 2.2202295000024606,
+      "labeled_pair_recall_at_k": {
+        "10": 0.947,
+        "20": 0.984,
+        "50": 0.996
+      },
+      "labeled_positive_directions": 1000,
+      "memory_note": "Sparse matrix storage only, not peak process or full index memory.",
+      "population": "all unique listings in the evaluated split, including both pair sides",
+      "queries": 1000,
+      "query_latency_ms": {
+        "p50": 9.19344999419991,
+        "p95": 22.019544990325812
+      },
+      "self_matches_excluded": true,
+      "sparse_matrix_bytes": 929204,
+      "vocabulary_fit": "training only"
+    },
+    "split_audit": {
+      "note": "Text overlaps are warnings, not proof of shared identity. Near-duplicate audit pending.",
+      "overlaps": {
+        "train:test": {
+          "entities": 0,
+          "identical_normalized_title_brand_model": 0
+        },
+        "train:validation": {
+          "entities": 500,
+          "identical_normalized_title_brand_model": 0
+        },
+        "validation:test": {
+          "entities": 0,
+          "identical_normalized_title_brand_model": 0
+        }
+      },
+      "test_entity_disjoint_required": true
+    },
+    "synthetic": false,
+    "test_sha256": "258f9b408e715410f07480bf4ad39788a10d5cee1512e322091de43dafae1297"
+  },
+  "retrieval_validation": {
+    "channels": {
+      "hybrid": {
+        "channel_hits": {
+          "semantic": 38013,
+          "tfidf": 38198
+        },
+        "direction": "directed; each gold pair contributes two queries",
+        "entity_positive_directions": 1000,
+        "entity_recall_at_k": {
+          "10": 0.935,
+          "20": 0.978,
+          "50": 0.996
+        },
+        "faiss_index_bytes": 1807682,
+        "index_build_seconds": 2.553737300011562,
+        "labeled_pair_recall_at_k": {
+          "10": 0.935,
+          "20": 0.978,
+          "50": 0.996
+        },
+        "labeled_positive_directions": 1000,
+        "memory_note": "Sparse matrix storage only, not peak process or full index memory.",
+        "population": "all unique listings in the evaluated split, including both pair sides",
+        "queries": 1000,
+        "query_latency_ms": {
+          "p50": 9.06750001013279,
+          "p95": 20.76443998230388
+        },
+        "self_matches_excluded": true,
+        "sparse_matrix_bytes": 1225856,
+        "vocabulary_fit": "fixed pretrained encoder; hybrid lexical vocabulary uses training"
+      },
+      "lexical": {
+        "channel_hits": {
+          "tfidf": 50000
+        },
+        "direction": "directed; each gold pair contributes two queries",
+        "entity_positive_directions": 1000,
+        "entity_recall_at_k": {
+          "10": 0.929,
+          "20": 0.972,
+          "50": 0.994
+        },
+        "index_build_seconds": 0.05118459998629987,
+        "labeled_pair_recall_at_k": {
+          "10": 0.929,
+          "20": 0.972,
+          "50": 0.994
+        },
+        "labeled_positive_directions": 1000,
+        "memory_note": "Sparse matrix storage only, not peak process or full index memory.",
+        "population": "all unique listings in the evaluated split, including both pair sides",
+        "queries": 1000,
+        "query_latency_ms": {
+          "p50": 7.467149989679456,
+          "p95": 15.577515016775575
+        },
+        "self_matches_excluded": true,
+        "sparse_matrix_bytes": 1225856,
+        "vocabulary_fit": "training only"
+      },
+      "semantic": {
+        "channel_hits": {
+          "semantic": 50000
+        },
+        "direction": "directed; each gold pair contributes two queries",
+        "entity_positive_directions": 1000,
+        "entity_recall_at_k": {
+          "10": 0.883,
+          "20": 0.955,
+          "50": 0.992
+        },
+        "faiss_index_bytes": 1807682,
+        "index_build_seconds": 2.7274232000054326,
+        "labeled_pair_recall_at_k": {
+          "10": 0.883,
+          "20": 0.955,
+          "50": 0.992
+        },
+        "labeled_positive_directions": 1000,
+        "memory_note": "Sparse matrix storage only, not peak process or full index memory.",
+        "population": "all unique listings in the evaluated split, including both pair sides",
+        "queries": 1000,
+        "query_latency_ms": {
+          "p50": 0.6145999941509217,
+          "p95": 2.013735023501795
+        },
+        "self_matches_excluded": true,
+        "sparse_matrix_bytes": 0,
+        "vocabulary_fit": "fixed pretrained encoder; hybrid lexical vocabulary uses training"
+      }
+    },
+    "encoder": "sentence-transformers/all-MiniLM-L6-v2",
+    "inputs": {
+      "train": "1915a92de76ddbf63a6c4d7ff3162df98f505033a8ad12ee7072b78b083d77c6",
+      "validation": "892e8d39cc8230dce5039a4bded16be1237d5c5c37b94a37404226d349ef3df8"
+    },
+    "license": "Apache-2.0 (model card); benchmark data licensing remains separate",
+    "phase": "validation_only",
+    "query_timing_note": "Indexed listing embeddings are cached; build includes encoding.",
+    "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "synthetic": false
+  },
+  "selection_reason": "Enriched logistic retained more validation matches at the configured precision/support target than LightGBM. Hybrid retrieval improved validation recall. No test-based model selection.",
+  "validation": {
+    "calibration_pairs": 772,
+    "cross_partition_pairs_excluded": 1011,
+    "implementation": {
+      "dependencies": {
+        "faiss-cpu": "1.15.1",
+        "lightgbm": "4.7.0",
+        "numpy": "2.5.4",
+        "scikit-learn": "1.9.1",
+        "sentence-transformers": "5.7.0"
+      },
+      "git": {
+        "commit": "67fffdd49d28ee218f9d2edba09cbe3755785373",
+        "working_tree_status": ""
+      },
+      "lock_sha256": "12ed36b67fddd30d526f6733a284ce028bd4a6ec490e08e0b74c030eb5d9484a",
+      "source_sha256": {
+        "__init__.py": "bd940e7034c9701c400f8c858a9327eb82f81ba780d29faa2589e7769225e0c8",
+        "cli.py": "72b560bbf4bdaf793b01d7ed49bbf075a57e39415c15cdb9639faea3a16644bf",
+        "evaluation/__init__.py": "485db8519fd089d9a8a13171c30ce18b59865f851434e3d063b5f50dad668d26",
+        "evaluation/config.py": "477994b0f3755a26be5ee3013b6a055553a640849555d65b100bfca5c60068c5",
+        "evaluation/development.py": "7ce9e329fa23fb1859cfe4ff5cf1e9b7945750794d1f6446def317671c488848",
+        "evaluation/metrics.py": "a39471d4b07210bd1687ea8de9d911fbc3a3fc0270053aa9cdde1a5c9cdb133e",
+        "evaluation/provenance.py": "9b7eade36a43e3e71f0dcfa1ea643f4aef608141ab0c6c687377bda884e3821d",
+        "evaluation/retrieval_ablation.py": "d3efb115bb7b85f2e0b47ef2bce7afc0faf067afabdc95cc22f53e9d2a85fd10",
+        "evaluation/runner.py": "9a95998180bcb1e8b7c6b09c85476d166c1e48cba94323c8cda25df293e29e8f",
+        "evaluation/synthetic.py": "2d24afd661278771d6202e0e414de79f12c2789d70776030b2901453eaac809b",
+        "ingestion/__init__.py": "19f1dc169f3a73bd658c834829ada04de6125ccd7704c47ff0450a32b80b364e",
+        "ingestion/audit.py": "557366407f03f8254b6d84be732f8f483224f32be54ef14d0dff4c88eb4cd833",
+        "ingestion/loaders.py": "0680adf4ac0c46fa843381dc4315beedc4187df352deccab5d994e8621780bce",
+        "matching/__init__.py": "7787af7047f7211831820102973fea3fd4d28ff529ae0e17b8468a6c4e3be1dc",
+        "matching/baseline.py": "f4d257ac4bc3a6b0c294f5bbc07a5c6f619b162c13644ec1357b32a6d2897dbb",
+        "matching/enriched.py": "03fe082a8727c022cbcdf5fe7c79ac533978c2bf3fa704db6f8ea4c8eef17af4",
+        "matching/features.py": "d7c303c41747758ad5ea13b5b4c5fa75814165e677339f4bf4977da2e275d6cf",
+        "matching/learned.py": "54bb1be25d1c6c36ad11d6d3982622a81ee1d728683e8a1434d62bf38251172e",
+        "normalization/__init__.py": "1bb45ff2a5e77f8c13aa9a3ba117b3c8a79a6b57a58c613d71195ef039650af5",
+        "retrieval/__init__.py": "5c7f9bf8d6315588675b6244192edd3def53c3d02ee6f9fae414eae4be499498",
+        "retrieval/semantic.py": "218a691103bc7e06f8e3708fc0e21182d82163c4a55ebeb61ed44d1f005ed241",
+        "schema.py": "6d3e37ce5fdbc1c0f5bffa07cbe1493e9a5330f2528f856ab18fead667294572"
+      }
+    },
+    "inputs": {
+      "train": "1915a92de76ddbf63a6c4d7ff3162df98f505033a8ad12ee7072b78b083d77c6",
+      "validation": "892e8d39cc8230dce5039a4bded16be1237d5c5c37b94a37404226d349ef3df8"
+    },
+    "models": {
+      "lightgbm": {
+        "calibrated_probability_quality": {
+          "average_precision": 0.8116980868927924,
+          "brier_score": 0.12418826139371257,
+          "probability_calibration": "none; reliability is measured, not assumed",
+          "reliability_bins": [
+            {
+              "count": 339,
+              "lower": 0.0,
+              "mean_probability": 0.018181854303518406,
+              "positive_fraction": 0.02654867256637168,
+              "upper": 0.1
+            },
+            {
+              "count": 50,
+              "lower": 0.1,
+              "mean_probability": 0.1465536285884215,
+              "positive_fraction": 0.32,
+              "upper": 0.2
+            },
+            {
+              "count": 42,
+              "lower": 0.2,
+              "mean_probability": 0.24819139736953688,
+              "positive_fraction": 0.4523809523809524,
+              "upper": 0.3
+            },
+            {
+              "count": 34,
+              "lower": 0.3,
+              "mean_probability": 0.3454329369521048,
+              "positive_fraction": 0.47058823529411764,
+              "upper": 0.4
+            },
+            {
+              "count": 54,
+              "lower": 0.4,
+              "mean_probability": 0.444719308471685,
+              "positive_fraction": 0.6111111111111112,
+              "upper": 0.5
+            },
+            {
+              "count": 54,
+              "lower": 0.5,
+              "mean_probability": 0.5552744169778764,
+              "positive_fraction": 0.48148148148148145,
+              "upper": 0.6
+            },
+            {
+              "count": 58,
+              "lower": 0.6,
+              "mean_probability": 0.652532431752942,
+              "positive_fraction": 0.8620689655172413,
+              "upper": 0.7
+            },
+            {
+              "count": 58,
+              "lower": 0.7,
+              "mean_probability": 0.7372788508074264,
+              "positive_fraction": 0.8103448275862069,
+              "upper": 0.8
+            },
+            {
+              "count": 27,
+              "lower": 0.8,
+              "mean_probability": 0.8390916470289292,
+              "positive_fraction": 0.9629629629629629,
+              "upper": 0.9
+            },
+            {
+              "count": 1,
+              "lower": 0.9,
+              "mean_probability": 0.90204235465642,
+              "positive_fraction": 1.0,
+              "upper": 1.0
+            }
+          ]
+        },
+        "classification": {
+          "f1": 0.1015625,
+          "false_negatives": 230,
+          "false_positives": 0,
+          "pairs": 717,
+          "precision": 1.0,
+          "recall": 0.053497942386831275,
+          "true_negatives": 474,
+          "true_positives": 13
+        },
+        "match_policy": {
+          "minimum_matches": 5,
+          "predicted_matches": 13,
+          "target_precision": 0.99,
+          "threshold": 0.8456930735987362,
+          "validation_precision": 1.0,
+          "validation_recall": 0.053497942386831275
+        },
+        "raw_probability_quality": {
+          "average_precision": 0.8116980868927924,
+          "brier_score": 0.12933573798386158,
+          "probability_calibration": "none; reliability is measured, not assumed",
+          "reliability_bins": [
+            {
+              "count": 383,
+              "lower": 0.0,
+              "mean_probability": 0.012466855949836505,
+              "positive_fraction": 0.057441253263707574,
+              "upper": 0.1
+            },
+            {
+              "count": 39,
+              "lower": 0.1,
+              "mean_probability": 0.14676381836757044,
+              "positive_fraction": 0.48717948717948717,
+              "upper": 0.2
+            },
+            {
+              "count": 33,
+              "lower": 0.2,
+              "mean_probability": 0.24430466420613373,
+              "positive_fraction": 0.3939393939393939,
+              "upper": 0.3
+            },
+            {
+              "count": 39,
+              "lower": 0.3,
+              "mean_probability": 0.36342943502335595,
+              "positive_fraction": 0.5897435897435898,
+              "upper": 0.4
+            },
+            {
+              "count": 30,
+              "lower": 0.4,
+              "mean_probability": 0.4494315464931831,
+              "positive_fraction": 0.5666666666666667,
+              "upper": 0.5
+            },
+            {
+              "count": 39,
+              "lower": 0.5,
+              "mean_probability": 0.556091435273313,
+              "positive_fraction": 0.46153846153846156,
+              "upper": 0.6
+            },
+            {
+              "count": 41,
+              "lower": 0.6,
+              "mean_probability": 0.6514059237724646,
+              "positive_fraction": 0.8292682926829268,
+              "upper": 0.7
+            },
+            {
+              "count": 60,
+              "lower": 0.7,
+              "mean_probability": 0.7543509031310152,
+              "positive_fraction": 0.85,
+              "upper": 0.8
+            },
+            {
+              "count": 37,
+              "lower": 0.8,
+              "mean_probability": 0.844302450776301,
+              "positive_fraction": 0.8378378378378378,
+              "upper": 0.9
+            },
+            {
+              "count": 16,
+              "lower": 0.9,
+              "mean_probability": 0.9203194207475187,
+              "positive_fraction": 0.9375,
+              "upper": 1.0
+            }
+          ]
+        },
+        "reject_threshold": 0.09219149616350375
+      },
+      "logistic": {
+        "calibrated_probability_quality": {
+          "average_precision": 0.7641349030092118,
+          "brier_score": 0.14211674365018967,
+          "probability_calibration": "none; reliability is measured, not assumed",
+          "reliability_bins": [
+            {
+              "count": 341,
+              "lower": 0.0,
+              "mean_probability": 0.03490291718801664,
+              "positive_fraction": 0.02932551319648094,
+              "upper": 0.1
+            },
+            {
+              "count": 60,
+              "lower": 0.1,
+              "mean_probability": 0.15273001724947288,
+              "positive_fraction": 0.35,
+              "upper": 0.2
+            },
+            {
+              "count": 56,
+              "lower": 0.2,
+              "mean_probability": 0.2511212237346606,
+              "positive_fraction": 0.5892857142857143,
+              "upper": 0.3
+            },
+            {
+              "count": 38,
+              "lower": 0.3,
+              "mean_probability": 0.3494834368650097,
+              "positive_fraction": 0.6052631578947368,
+              "upper": 0.4
+            },
+            {
+              "count": 54,
+              "lower": 0.4,
+              "mean_probability": 0.45438891022834793,
+              "positive_fraction": 0.5740740740740741,
+              "upper": 0.5
+            },
+            {
+              "count": 52,
+              "lower": 0.5,
+              "mean_probability": 0.5552018234760475,
+              "positive_fraction": 0.6346153846153846,
+              "upper": 0.6
+            },
+            {
+              "count": 46,
+              "lower": 0.6,
+              "mean_probability": 0.6472372376140335,
+              "positive_fraction": 0.7608695652173914,
+              "upper": 0.7
+            },
+            {
+              "count": 35,
+              "lower": 0.7,
+              "mean_probability": 0.7556629711390643,
+              "positive_fraction": 0.7428571428571429,
+              "upper": 0.8
+            },
+            {
+              "count": 25,
+              "lower": 0.8,
+              "mean_probability": 0.8466823529826928,
+              "positive_fraction": 0.84,
+              "upper": 0.9
+            },
+            {
+              "count": 10,
+              "lower": 0.9,
+              "mean_probability": 0.9243951527091477,
+              "positive_fraction": 1.0,
+              "upper": 1.0
+            }
+          ]
+        },
+        "classification": {
+          "f1": 0.1450381679389313,
+          "false_negatives": 224,
+          "false_positives": 0,
+          "pairs": 717,
+          "precision": 1.0,
+          "recall": 0.07818930041152264,
+          "true_negatives": 474,
+          "true_positives": 19
+        },
+        "match_policy": {
+          "minimum_matches": 5,
+          "predicted_matches": 19,
+          "target_precision": 0.99,
+          "threshold": 0.8597742461487005,
+          "validation_precision": 1.0,
+          "validation_recall": 0.07818930041152264
+        },
+        "raw_probability_quality": {
+          "average_precision": 0.7641349030092118,
+          "brier_score": 0.14436882968347495,
+          "probability_calibration": "none; reliability is measured, not assumed",
+          "reliability_bins": [
+            {
+              "count": 356,
+              "lower": 0.0,
+              "mean_probability": 0.025480981041822927,
+              "positive_fraction": 0.042134831460674156,
+              "upper": 0.1
+            },
+            {
+              "count": 59,
+              "lower": 0.1,
+              "mean_probability": 0.14912829098784863,
+              "positive_fraction": 0.3559322033898305,
+              "upper": 0.2
+            },
+            {
+              "count": 50,
+              "lower": 0.2,
+              "mean_probability": 0.24935878343435613,
+              "positive_fraction": 0.66,
+              "upper": 0.3
+            },
+            {
+              "count": 31,
+              "lower": 0.3,
+              "mean_probability": 0.3498983334234724,
+              "positive_fraction": 0.6129032258064516,
+              "upper": 0.4
+            },
+            {
+              "count": 46,
+              "lower": 0.4,
+              "mean_probability": 0.45020386023153,
+              "positive_fraction": 0.5217391304347826,
+              "upper": 0.5
+            },
+            {
+              "count": 45,
+              "lower": 0.5,
+              "mean_probability": 0.5487677302409834,
+              "positive_fraction": 0.6666666666666666,
+              "upper": 0.6
+            },
+            {
+              "count": 47,
+              "lower": 0.6,
+              "mean_probability": 0.6485779978943811,
+              "positive_fraction": 0.6808510638297872,
+              "upper": 0.7
+            },
+            {
+              "count": 31,
+              "lower": 0.7,
+              "mean_probability": 0.7413111630022339,
+              "positive_fraction": 0.8064516129032258,
+              "upper": 0.8
+            },
+            {
+              "count": 36,
+              "lower": 0.8,
+              "mean_probability": 0.847146898760956,
+              "positive_fraction": 0.7777777777777778,
+              "upper": 0.9
+            },
+            {
+              "count": 16,
+              "lower": 0.9,
+              "mean_probability": 0.9376487749638952,
+              "positive_fraction": 1.0,
+              "upper": 1.0
+            }
+          ]
+        },
+        "reject_threshold": 0.07309069922324685
+      }
+    },
+    "partition_seed": 42,
+    "partition_weighting": "Positive weight 1, negative weight 2 corrects unequal inclusion probabilities. Classification counts and probability diagnostics describe the retained subset.",
+    "phase": "validation_only",
+    "policy_pairs": 717,
+    "synthetic": false,
+    "test_opened": false
+  }
+}

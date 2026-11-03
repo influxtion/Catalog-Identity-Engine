@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 from typing import Literal
@@ -131,5 +132,10 @@ def create_app(database_url=None, model_directory=None):
     @app.get("/evaluations")
     def evaluations():
         return call(catalog.evaluation_reports)
+
+    @app.get("/benchmarks")
+    def benchmarks():
+        path = Path(__file__).resolve().parents[1] / "benchmarks.json"
+        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
 
     return app
