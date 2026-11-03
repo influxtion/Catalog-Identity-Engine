@@ -42,8 +42,8 @@ export function RetrievalCosts({
       </div>
       <p className="helper">
         Build includes vocabulary fitting. Memory includes the Python process;
-        sampling can miss brief peaks. No 100k-listing result or monetary cost
-        is claimed.
+        sampling can miss brief peaks. Measurements exclude service requests and
+        embedding inference.
       </p>
     </div>
   );

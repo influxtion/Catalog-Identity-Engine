@@ -76,6 +76,36 @@ export type Benchmark = {
   retrieval: Record<string, number>;
   note: string;
 };
+export type DevelopmentModel = {
+  name: string;
+  precision: number | null;
+  recall: number | null;
+  true_positives: number;
+  false_positives: number;
+  average_precision: number;
+};
+export type DevelopmentBenchmark = {
+  protocol: string;
+  warning: string;
+  pairs: number;
+  models: DevelopmentModel[];
+};
+export type EvaluationReport = {
+  id: string;
+  data: {
+    phase?: string;
+    dataset: string;
+    synthetic: boolean;
+    feature_version?: string;
+    models?: Record<
+      string,
+      {
+        classification: Omit<DevelopmentModel, "name" | "average_precision">;
+        average_precision: number;
+      }
+    >;
+  };
+};
 export type RetrievalCostReport = {
   synthetic: boolean;
   scope: string;

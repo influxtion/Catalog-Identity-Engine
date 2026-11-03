@@ -1,0 +1,34 @@
+{
+  "models": [
+    {
+      "average_precision": 0.5295570119316882,
+      "f1": 0.0945179584120983,
+      "false_negatives": 475,
+      "false_positives": 4,
+      "feature_version": "2",
+      "name": "LightGBM - Previous features",
+      "pairs": 4500,
+      "precision": 0.8620689655172413,
+      "recall": 0.05,
+      "true_negatives": 3996,
+      "true_positives": 25
+    },
+    {
+      "average_precision": 0.6230626689136795,
+      "f1": 0.0842911877394636,
+      "false_negatives": 478,
+      "false_positives": 0,
+      "feature_version": "3",
+      "name": "LightGBM - Specification features",
+      "pairs": 4500,
+      "precision": 1.0,
+      "recall": 0.044,
+      "true_negatives": 4000,
+      "true_positives": 22
+    }
+  ],
+  "pairs": 4500,
+  "phase": "validation_diagnostics",
+  "protocol": "WDC Products - 80% corner cases - large development split",
+  "warning": "Development-data diagnostics, not held-out test accuracy. Zero errors among 22 matches does not establish 99% production precision."
+}

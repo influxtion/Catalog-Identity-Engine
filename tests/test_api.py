@@ -110,6 +110,34 @@ def test_jobs_are_idempotent_and_failures_are_durable(client, tmp_path):
         catalog.finish_job(job["id"], result={})
 
 
+def test_validation_job_never_requires_a_test_file(client, tmp_path):
+    pytest.importorskip("lightgbm")
+    from catalog_identity.evaluation.config import RunConfig
+    from catalog_identity.evaluation.synthetic import write_synthetic
+
+    paths = write_synthetic(tmp_path / "fixture")
+    config = RunConfig(
+        dataset_name="fixture",
+        dataset_version="1",
+        synthetic=True,
+        train=paths["train"].resolve(),
+        validation=paths["validation"].resolve(),
+        test=tmp_path / "absent-test.json",
+    )
+    (tmp_path / "fixture.json").write_text(config.model_dump_json())
+    response = client.post("/evaluations", json={"config_name": "fixture.json"})
+    assert response.status_code == 202
+    assert response.json()["payload"]["mode"] == "validation"
+    catalog = client.app.state.catalog
+    run_one(catalog, tmp_path, tmp_path / "runs")
+    job = catalog.jobs()[0]
+    assert job["status"] == "succeeded", job["error"]
+    assert not job["result"]["test_opened"]
+    assert job["result"]["feature_version"] == "3"
+    assert set(job["result"]["models"]) == {"logistic", "lightgbm"}
+    assert catalog.evaluation_reports()[0]["data"]["phase"] == "validation_only"
+
+
 def test_family_review_keeps_unresolved_variant_in_queue(client):
     records = showcase()
     catalog = client.app.state.catalog

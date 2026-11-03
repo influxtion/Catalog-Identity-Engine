@@ -61,6 +61,33 @@ test("explore, compare, and record a review", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Retrieval cost measurements" }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("cell", { name: "100,000", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Precision development" }),
+  ).toBeVisible();
+  const queued = page.waitForRequest(
+    (request) =>
+      request.url().endsWith("/api/catalog/evaluations") &&
+      request.method() === "POST",
+  );
+  await page
+    .getByRole("button", { name: "Queue validation comparison" })
+    .click();
+  expect((await queued).postDataJSON()).toEqual({
+    config_name: "wdc-products-large.json",
+    mode: "validation",
+    feature_version: "3",
+  });
+  await expect(
+    page.getByText("Validation comparison queued. Test data stays unopened."),
+  ).toBeVisible();
+  await page
+    .getByRole("heading", { name: "Precision development" })
+    .locator("..")
+    .screenshot({ path: "test-results/precision-development.png" });
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: "test-results/dashboard-evaluation.png",
     fullPage: true,

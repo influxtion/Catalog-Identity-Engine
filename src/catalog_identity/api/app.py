@@ -36,6 +36,8 @@ class ReviewRequest(PairRequest):
 class EvaluationRequest(Request):
     config_name: str = Field(pattern=r"^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*\.json$")
     idempotency_key: str | None = Field(default=None, max_length=200)
+    mode: Literal["validation", "baseline"] = "validation"
+    feature_version: Literal["2", "3"] = "3"
 
 
 def create_app(database_url=None, model_directory=None):
@@ -118,7 +120,11 @@ def create_app(database_url=None, model_directory=None):
         return call(
             catalog.enqueue,
             "evaluate",
-            {"config_name": request.config_name},
+            {
+                "config_name": request.config_name,
+                "mode": request.mode,
+                "feature_version": request.feature_version,
+            },
             request.idempotency_key,
         )
 
@@ -134,6 +140,11 @@ def create_app(database_url=None, model_directory=None):
     @app.get("/performance")
     def performance():
         path = Path(__file__).resolve().parents[1] / "performance.json"
+        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+    @app.get("/development-benchmarks")
+    def development_benchmarks():
+        path = Path(__file__).resolve().parents[1] / "development-benchmarks.json"
         return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
 
     return app

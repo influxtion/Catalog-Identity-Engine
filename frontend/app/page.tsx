@@ -6,6 +6,7 @@ import { ProductIcon, Tags } from "@/components/product";
 import { PairDialog } from "@/components/pair-dialog";
 import { ImportDialog } from "@/components/import-dialog";
 import { RetrievalCosts } from "@/components/retrieval-costs";
+import { DevelopmentPanel } from "@/components/development-panel";
 import {
   api,
   Benchmark,
@@ -16,6 +17,8 @@ import {
   Overview,
   Pair,
   RetrievalCostReport,
+  DevelopmentBenchmark,
+  EvaluationReport,
   shortId,
   priceLabel,
 } from "@/lib/api";
@@ -37,6 +40,10 @@ export default function Dashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
   const [costs, setCosts] = useState<RetrievalCostReport | null>(null);
+  const [development, setDevelopment] = useState<DevelopmentBenchmark | null>(
+    null,
+  );
+  const [reports, setReports] = useState<EvaluationReport[]>([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -49,7 +56,7 @@ export default function Dashboard() {
   const [graphLevel, setGraphLevel] = useState("family");
   const load = useCallback(async () => {
     try {
-      const [rows, f, v, q, o, j, b, c] = await Promise.all([
+      const [rows, f, v, q, o, j, b, c, d, e] = await Promise.all([
         api<Listing[]>("/listings?limit=200"),
         api<Identity[]>("/identities?level=family"),
         api<Identity[]>("/identities?level=variant"),
@@ -58,6 +65,8 @@ export default function Dashboard() {
         api<Job[]>("/jobs"),
         api<Benchmark[]>("/benchmarks"),
         api<RetrievalCostReport | null>("/performance"),
+        api<DevelopmentBenchmark | null>("/development-benchmarks"),
+        api<EvaluationReport[]>("/evaluations"),
       ]);
       setListings(rows);
       setFamilies(f);
@@ -67,6 +76,8 @@ export default function Dashboard() {
       setJobs(j);
       setBenchmarks(b);
       setCosts(c);
+      setDevelopment(d);
+      setReports(e);
       setSelected((current) =>
         current && rows.some((row) => row.id === current)
           ? current
@@ -744,6 +755,11 @@ export default function Dashboard() {
                   ))}
                 </div>
                 <RetrievalCosts report={costs} />
+                <DevelopmentPanel
+                  benchmark={development}
+                  reports={reports}
+                  onQueued={load}
+                />
                 <div className="section-heading history-heading">
                   <h3>Evaluation jobs</h3>
                   <button
@@ -752,6 +768,7 @@ export default function Dashboard() {
                       try {
                         await api("/evaluations", {
                           config_name: "wdc-products.example.json",
+                          mode: "baseline",
                         });
                         setNotice(
                           "Evaluation queued. This runs the original baseline against locally supplied WDC files.",
