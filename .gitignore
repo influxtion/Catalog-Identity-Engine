@@ -26,3 +26,6 @@ frontend/.next/
 frontend/playwright-report/
 frontend/test-results/
 frontend/*.tsbuildinfo
+AGENTS.md
+AGENDS.md
+PROJECT_SPEC.md

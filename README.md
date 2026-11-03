@@ -197,8 +197,7 @@ CI runs Python 3.11/3.12 on Windows/Linux, PostgreSQL integration, and Chromium 
 The PostgreSQL test skips locally unless `TEST_DATABASE_URL` names a disposable test database.
 Browser tests start their own API and production dashboard with an isolated synthetic database.
 
-Read [PROJECT_SPEC.md](PROJECT_SPEC.md) for the full design and
-[docs/datasets.md](docs/datasets.md) for benchmark semantics and data restrictions.
+Read [docs/datasets.md](docs/datasets.md) for benchmark semantics and data restrictions.
 
 ## License
 
