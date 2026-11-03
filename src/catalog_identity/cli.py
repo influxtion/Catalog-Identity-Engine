@@ -30,12 +30,56 @@ def main(argv: list[str] | None = None) -> int:
     frozen.add_argument("--model", type=Path, required=True)
     frozen.add_argument("--output", type=Path, required=True)
     frozen.add_argument("--hybrid", action="store_true")
+    server = commands.add_parser("serve", help="Start the local inspection API")
+    server.add_argument("--port", type=int, default=8000)
+    worker = commands.add_parser("worker", help="Process durable catalog jobs")
+    worker.add_argument("--once", action="store_true")
+    worker.add_argument("--config-root", type=Path, default=Path("configs"))
+    worker.add_argument("--output-root", type=Path, default=Path("runs/jobs"))
+    commands.add_parser("seed-showcase", help="Load original fictional showcase listings")
     profiling = commands.add_parser(
         "profile", help="Validate and profile canonical CSV/JSONL listings"
     )
     profiling.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command == "serve":
+            import uvicorn
+
+            uvicorn.run(
+                "catalog_identity.api.app:create_app",
+                factory=True,
+                host="127.0.0.1",
+                port=args.port,
+            )
+            return 0
+        if args.command in ("worker", "seed-showcase"):
+            import os
+            import time
+
+            from catalog_identity.storage.catalog import Catalog
+            from catalog_identity.storage.database import Database
+
+            database = Database(os.getenv("DATABASE_URL", "sqlite:///catalog.db"))
+            model_directory = os.getenv("CATALOG_MODEL_DIR")
+            catalog = Catalog(database, Path(model_directory) if model_directory else None)
+            try:
+                if args.command == "seed-showcase":
+                    from catalog_identity.showcase import seed
+
+                    print(json.dumps(seed(catalog), indent=2))
+                else:
+                    from catalog_identity.storage.worker import run_one
+
+                    while True:
+                        job = run_one(catalog, args.config_root, args.output_root)
+                        if args.once:
+                            break
+                        if job is None:
+                            time.sleep(1)
+            finally:
+                database.close()
+            return 0
         if args.command == "evaluate-frozen":
             from catalog_identity.evaluation.frozen import evaluate_frozen
 

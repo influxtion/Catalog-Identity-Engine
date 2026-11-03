@@ -18,7 +18,7 @@ class ClusterResult:
     rejected: tuple[dict, ...]
 
 
-def cluster(listings, edges, level="family", threshold=0.95, constrained=True):
+def cluster(listings, edges, level="family", threshold=0.95, constrained=True, forbidden_pairs=()):
     """Complete cross-cluster support avoids unsupported transitive bridges.
 
     Scores must have the requested identity semantics. Binary WDC probabilities are
@@ -37,6 +37,7 @@ def cluster(listings, edges, level="family", threshold=0.95, constrained=True):
             raise ValueError("duplicate edge")
         scores[key] = edge.score
     groups = {key: {key} for key in listings}
+    forbidden = {tuple(sorted(pair)) for pair in forbidden_pairs}
     owners = {key: key for key in listings}
     accepted, rejected = [], []
     for (left, right), score in sorted(scores.items(), key=lambda item: (-item[1], item[0])):
@@ -52,6 +53,9 @@ def cluster(listings, edges, level="family", threshold=0.95, constrained=True):
         if constrained:
             for x in sorted(groups[a]):
                 for y in sorted(groups[b]):
+                    if tuple(sorted((x, y))) in forbidden:
+                        reason, witness = "human_rejection", {"left": x, "right": y}
+                        break
                     evidence = compare_identity(listings[x], listings[y])
                     if getattr(evidence, level) == "different":
                         reason, witness = (
@@ -86,7 +90,7 @@ def cluster(listings, edges, level="family", threshold=0.95, constrained=True):
     )
 
 
-def structured_edges(listings):
+def structured_edges(listings, maximum_block=500):
     """Generate only within known brand/model blocks for the structured showcase.
 
     These are deterministic rule confidences, not calibrated model probabilities.
@@ -98,6 +102,10 @@ def structured_edges(listings):
             blocks.setdefault((listing.brand, listing.model), []).append(key)
     family, variant = [], []
     for members in blocks.values():
+        if len(members) > maximum_block:
+            raise ValueError(
+                "structured block exceeds 500 members; supply a bounded candidate graph"
+            )
         for a, b in combinations(sorted(members), 2):
             evidence = compare_identity(listings[a], listings[b])
             if evidence.family == "same":
