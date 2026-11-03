@@ -1,0 +1,22 @@
+{
+  "dataset_name": "wdc-products",
+  "dataset_version": "2022-12-22",
+  "synthetic": false,
+  "train": "../data/wdc-products-80/wdcproducts80cc20rnd000un_train_small.json.gz",
+  "validation": "../data/wdc-products-80/wdcproducts80cc20rnd000un_valid_small.json.gz",
+  "test": "../data/wdc-products-80/wdcproducts80cc20rnd100un_gs.json.gz",
+  "protocol": {
+    "corner_cases": 80,
+    "development_size": "small",
+    "test_unseen": 100
+  },
+  "test_entity_disjoint": true,
+  "seed": 42,
+  "max_features": 50000,
+  "regularization": 1.0,
+  "target_precision": 0.99,
+  "minimum_validation_matches": 5,
+  "reject_threshold": 0.1,
+  "retrieval_k": [10, 20, 50],
+  "pipeline_k": 20
+}
