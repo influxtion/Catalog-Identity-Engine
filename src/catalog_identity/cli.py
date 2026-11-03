@@ -21,6 +21,7 @@ def main(argv: list[str] | None = None) -> int:
     development = commands.add_parser("develop", help="Compare matchers using validation only")
     development.add_argument("--config", type=Path, required=True)
     development.add_argument("--output", type=Path, required=True)
+    development.add_argument("--negative-policy", choices=["all", "random_only"], default="all")
     ablation = commands.add_parser("retrieval-ablation", help="Compare retrieval on validation")
     ablation.add_argument("--config", type=Path, required=True)
     ablation.add_argument("--output", type=Path, required=True)
@@ -37,12 +38,34 @@ def main(argv: list[str] | None = None) -> int:
     worker.add_argument("--config-root", type=Path, default=Path("configs"))
     worker.add_argument("--output-root", type=Path, default=Path("runs/jobs"))
     commands.add_parser("seed-showcase", help="Load original fictional showcase listings")
+    clusters = commands.add_parser(
+        "cluster-showcase", help="Evaluate synthetic hierarchical clusters"
+    )
+    clusters.add_argument("--output", type=Path, required=True)
+    scale = commands.add_parser(
+        "benchmark-scale", help="Measure lexical retrieval on synthetic data"
+    )
+    scale.add_argument("--output", type=Path, required=True)
+    scale.add_argument("--sizes", nargs="+", type=int, default=[1000, 10000])
+    scale.add_argument("--queries", type=int, default=100)
     profiling = commands.add_parser(
         "profile", help="Validate and profile canonical CSV/JSONL listings"
     )
     profiling.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command == "cluster-showcase":
+            from catalog_identity.evaluation.cluster_showcase import cluster_showcase
+
+            report = cluster_showcase(args.output)
+            print(json.dumps(report["levels"], indent=2))
+            return 0
+        if args.command == "benchmark-scale":
+            from catalog_identity.evaluation.scaling import scaling
+
+            report = scaling(args.output, args.sizes, args.queries)
+            print(json.dumps(report["runs"], indent=2))
+            return 0
         if args.command == "serve":
             import uvicorn
 
@@ -105,7 +128,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "develop":
             from catalog_identity.evaluation.development import develop
 
-            report = develop(load_config(args.config), args.output)
+            report = develop(
+                load_config(args.config), args.output, negative_policy=args.negative_policy
+            )
             print(
                 json.dumps(
                     {name: value["classification"] for name, value in report["models"].items()},

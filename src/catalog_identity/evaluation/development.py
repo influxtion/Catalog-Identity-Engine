@@ -38,10 +38,23 @@ def validation_partitions(split: BenchmarkSplit, seed: int = 42):
     return partitions
 
 
-def develop(config: RunConfig, output: Path, learners=("logistic", "lightgbm")) -> dict:
+def develop(
+    config: RunConfig, output: Path, learners=("logistic", "lightgbm"), negative_policy="all"
+) -> dict:
     if output.exists():
         raise ValueError("output already exists")
     train = load_wdc_pairs(config.train, "train")
+    if negative_policy not in ("all", "random_only"):
+        raise ValueError("unknown training negative policy")
+    original_training_pairs = len(train.pairs)
+    if negative_policy == "random_only":
+        train = BenchmarkSplit(
+            train.name,
+            train.listings,
+            tuple(p for p in train.pairs if p.label or not p.hard_negative),
+            train.entity_ids,
+            train.identity_level,
+        )
     validation = load_wdc_pairs(config.validation, "validation")
     if train.listings.keys() & validation.listings.keys():
         raise ValueError("train/validation listing leakage")
@@ -64,6 +77,12 @@ def develop(config: RunConfig, output: Path, learners=("logistic", "lightgbm")) 
             "Classification counts and probability diagnostics describe the retained subset."
         ),
         "models": {},
+        "training_selection": {
+            "negative_policy": negative_policy,
+            "original_pairs": original_training_pairs,
+            "used_pairs": len(train.pairs),
+            "positives": sum(p.label for p in train.pairs),
+        },
     }
     y = np.array([p.label for p in policy.pairs])
     policy_weights = np.where(y == 1, 1.0, 2.0)
@@ -98,6 +117,7 @@ def develop(config: RunConfig, output: Path, learners=("logistic", "lightgbm")) 
             "inputs": report["inputs"],
             "synthetic": config.synthetic,
             "identity_level": "benchmark_entity",
+            "training_selection": report["training_selection"],
         }
         write_json(model_path / "policy.json", policy_record)
         metrics = {
