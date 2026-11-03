@@ -1,0 +1,1 @@
+"""Validated, split-aware ingestion."""
