@@ -12,11 +12,14 @@ from sqlalchemy import (
     Table,
     create_engine,
     insert,
+    inspect,
     select,
+    update,
 )
 from sqlalchemy.pool import StaticPool
 
 metadata = MetaData()
+SCHEMA_VERSION = 2
 listings = Table(
     "listings",
     metadata,
@@ -26,6 +29,14 @@ listings = Table(
     Column("title_search", String, nullable=False),
     Column("revision", Integer, nullable=False),
     Column("digest", String, nullable=False),
+    Column("data", JSON, nullable=False),
+)
+normalized_listings = Table(
+    "normalized_listings",
+    metadata,
+    Column("listing_id", String, primary_key=True),
+    Column("listing_revision", Integer, nullable=False),
+    Column("normalization_version", String, nullable=False),
     Column("data", JSON, nullable=False),
 )
 state = Table(
@@ -127,8 +138,15 @@ class Database:
                 options["poolclass"] = StaticPool
         self.engine = create_engine(url, **options)
         self.lock = RLock()
+        if inspect(self.engine).has_table(state.name):
+            with self.engine.connect() as connection:
+                stored = connection.execute(
+                    select(state.c.data).where(state.c.key == "catalog")
+                ).scalar_one_or_none()
+                if stored and stored.get("schema_version") not in (1, SCHEMA_VERSION):
+                    raise ValueError("unsupported database schema version; migrate before opening")
         metadata.create_all(self.engine)
-        with self.engine.begin() as connection:
+        with self.transaction() as connection:
             current = (
                 connection.execute(select(state).where(state.c.key == "catalog")).mappings().first()
             )
@@ -137,7 +155,7 @@ class Database:
                     insert(state).values(
                         key="catalog",
                         data={
-                            "schema_version": 1,
+                            "schema_version": SCHEMA_VERSION,
                             "revision": 0,
                             "identities_stale": False,
                             "family_registry": None,
@@ -146,13 +164,50 @@ class Database:
                         },
                     )
                 )
-            elif current["data"].get("schema_version") != 1:
+            elif current["data"].get("schema_version") == 1:
+                self._migrate_v1(connection, current["data"])
+            elif current["data"].get("schema_version") != SCHEMA_VERSION:
                 raise ValueError("unsupported database schema version; migrate before opening")
+
+    def _migrate_v1(self, connection, catalog_state):
+        from catalog_identity.normalization import normalize
+        from catalog_identity.schema import Listing
+        from catalog_identity.storage.normalized import normalized_payload
+
+        result = connection.execute(select(listings)).mappings()
+        while rows := result.fetchmany(500):
+            for row in rows:
+                normalized = normalize(Listing.model_validate(row["data"]))
+                payload = {
+                    "listing_revision": row["revision"],
+                    "normalization_version": normalized.version,
+                    "data": normalized_payload(normalized),
+                }
+                exists = connection.execute(
+                    select(normalized_listings.c.listing_id).where(
+                        normalized_listings.c.listing_id == row["id"]
+                    )
+                ).first()
+                if exists:
+                    connection.execute(
+                        update(normalized_listings)
+                        .where(normalized_listings.c.listing_id == row["id"])
+                        .values(**payload)
+                    )
+                else:
+                    connection.execute(
+                        insert(normalized_listings).values(listing_id=row["id"], **payload)
+                    )
+        connection.execute(
+            update(state)
+            .where(state.c.key == "catalog")
+            .values(data={**catalog_state, "schema_version": SCHEMA_VERSION})
+        )
 
     @contextmanager
     def transaction(self):
         # PostgreSQL serializes catalog writes across API and worker processes.
-        # SQLite is a single-process development/test fallback.
+        # SQLite BEGIN IMMEDIATE serializes local API/worker processes as well.
         with self.lock, self.engine.connect() as connection:
             if self.engine.dialect.name == "sqlite":
                 connection.exec_driver_sql("BEGIN IMMEDIATE")

@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from catalog_identity.schema import Listing
 from catalog_identity.storage.catalog import Catalog, Conflict, NotFound
-from catalog_identity.storage.database import Database
+from catalog_identity.storage.database import SCHEMA_VERSION, Database
 
 
 class Request(BaseModel):
@@ -65,7 +65,7 @@ def create_app(database_url=None, model_directory=None):
 
     @app.get("/health")
     def health():
-        return {"status": "ok", "schema_version": 1}
+        return {"status": "ok", "schema_version": SCHEMA_VERSION}
 
     @app.get("/overview")
     def overview():

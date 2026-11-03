@@ -16,6 +16,7 @@ from catalog_identity.normalization import normalize, normalize_text
 from catalog_identity.retrieval import CandidateIndex
 from catalog_identity.schema import Listing
 from catalog_identity.storage import database as tables
+from catalog_identity.storage.normalized import normalized_payload
 
 
 class NotFound(ValueError):
@@ -143,6 +144,28 @@ class Catalog:
                     )
                 else:
                     connection.execute(insert(tables.listings).values(id=record.key, **values))
+                normalized_values = dict(
+                    listing_revision=values["revision"],
+                    normalization_version=normalized.version,
+                    data=normalized_payload(normalized),
+                )
+                normalized_row = connection.execute(
+                    select(tables.normalized_listings.c.listing_id).where(
+                        tables.normalized_listings.c.listing_id == record.key
+                    )
+                ).first()
+                if normalized_row:
+                    connection.execute(
+                        update(tables.normalized_listings)
+                        .where(tables.normalized_listings.c.listing_id == record.key)
+                        .values(**normalized_values)
+                    )
+                else:
+                    connection.execute(
+                        insert(tables.normalized_listings).values(
+                            listing_id=record.key, **normalized_values
+                        )
+                    )
                 changed.append(record.key)
             if changed:
                 for table in (tables.pairs, tables.reviews):
@@ -191,6 +214,11 @@ class Catalog:
             )
             return {
                 **dict(row),
+                "normalized": connection.execute(
+                    select(tables.normalized_listings.c.data).where(
+                        tables.normalized_listings.c.listing_id == key
+                    )
+                ).scalar_one(),
                 "identities": [dict(x) for x in membership],
                 "identities_stale": self._state(connection)["identities_stale"],
             }

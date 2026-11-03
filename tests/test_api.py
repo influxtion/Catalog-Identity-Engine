@@ -6,7 +6,7 @@ import pytest
 pytest.importorskip("sqlalchemy")
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from catalog_identity.api.app import create_app
 from catalog_identity.showcase import seed, showcase
@@ -189,6 +189,8 @@ def test_queue_failure_rolls_back_ingestion_and_review(client, monkeypatch):
         client.post("/listings", json={"listings": [x.model_dump() for x in records]})
     assert catalog.search() == []
     assert catalog.overview()["catalog_revision"] == 0
+    with catalog.db.transaction() as connection:
+        assert connection.execute(select(tables.normalized_listings)).first() is None
     catalog.ingest(records)
     revision = catalog.overview()["catalog_revision"]
     with pytest.raises(RuntimeError, match="queue write failed"):
@@ -288,4 +290,12 @@ def test_postgres_ingestion_and_worker():
     catalog.enqueue("rebuild")
     assert run_one(catalog, Path("configs"), Path("runs"))
     assert catalog.jobs()[0]["status"] == "succeeded"
+    with db.transaction() as connection:
+        state = connection.execute(select(tables.state.c.data)).scalar_one()
+        connection.execute(update(tables.state).values(data={**state, "schema_version": 1}))
     db.close()
+    upgraded = Database(os.environ["TEST_DATABASE_URL"])
+    with upgraded.transaction() as connection:
+        assert connection.execute(select(tables.state.c.data)).scalar_one()["schema_version"] == 2
+        assert len(connection.execute(select(tables.normalized_listings)).all()) == len(showcase())
+    upgraded.close()

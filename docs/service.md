@@ -17,9 +17,11 @@ uv run catalog-identity serve
 
 The default, when `DATABASE_URL` is unset, is a persistent SQLite file `catalog.db`.
 SQLite supports the local demo with serialized transactions; PostgreSQL is the target
-for a shared service. Schema version 1 is created on an empty database. Unknown schema
-versions fail closed. Future schema changes require an explicit migration; `create_all`
-does not migrate existing tables.
+for a shared service. Schema version 2 stores normalized attributes and their transformation
+history separately from the original listing, linked to its revision and normalization version.
+Opening a version 1 database creates that table and backfills it transactionally without
+changing source records. Unknown schema versions fail closed before creating new tables.
+Future schema changes require a corresponding migration; `create_all` alone is not a migration.
 
 In another terminal with the same environment:
 
@@ -33,6 +35,13 @@ expensive rebuild/evaluation work and return immediately. A worker crash leaves 
 `worker --once` processes at most one pending job. Evaluation jobs accept a configuration
 filename under the configured directory, not arbitrary filesystem paths. Do not expose
 this developer API to untrusted users.
+
+New evaluation requests default to `mode: "validation"`, which trains both matchers and
+exports validation diagnostics without opening test data. `feature_version` selects `"2"`
+or `"3"`; the worker needs the `models` extra. The dashboard defaults to this workflow.
+`mode: "baseline"` explicitly runs the original three-split baseline. Legacy queued jobs
+without a mode keep their original baseline behavior. Completed summaries are available from
+`GET /evaluations`; full artifacts and local pair evidence remain in the worker's run directory.
 
 API documentation: <http://127.0.0.1:8000/docs>. Endpoints cover listing ingestion/search,
 candidate retrieval, pair inspection, family/variant identities, reviews, evaluations and jobs.
