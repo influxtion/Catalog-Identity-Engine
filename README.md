@@ -175,7 +175,7 @@ uv run catalog-identity develop --config configs/wdc-products.example.json --neg
 ```
 
 Scaling measurements cover lexical retrieval on synthetic populations through 10,000 listings.
-The live candidate endpoint rebuilds its index per request; the dashboard loads at most 200
+The live candidate endpoint caches its index by catalog revision; the dashboard loads at most 200
 listings. Structured graph generation is capped at 500 listings per brand/model block.
 There is no 100k service claim, real human-labeled hierarchical evaluation, image experiment,
 or cross-encoder result. Larger-corpus ingestion and production indexing remain future work.

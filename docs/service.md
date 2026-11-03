@@ -61,6 +61,9 @@ requires resolving any active family rejection first.
 
 Structured generation is bounded to 500 listings per brand/model block, with an explicit
 error beyond that size. Supply a bounded candidate graph for larger blocks. Live lexical
-search currently rebuilds its vocabulary from the current catalog per request; benchmark
-evaluation continues to fit vocabulary only on training records. This live route is a
-correctness prototype, not a low-latency scale service.
+search fits a process-local index on the current catalog and caches it by database revision.
+Writes from other API/worker processes invalidate that cache on the next request. A concurrent
+change during retrieval rejects the stale result. Benchmark vocabulary still uses training
+records only. Cold builds are synchronous and each process owns its cache; this is not a
+persistent distributed index. Pair inspection reads only the two requested records, and
+review queues exclude scores from other model versions.

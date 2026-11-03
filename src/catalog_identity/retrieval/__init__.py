@@ -4,6 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from heapq import nsmallest
 
+import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from catalog_identity.normalization import NormalizedListing
@@ -69,6 +70,7 @@ class CandidateIndex:
             raise ValueError("fit the retriever on training records before building an index")
         self._indexed = False
         self.listings = sorted(listings, key=lambda x: x.key)
+        self.positions = {listing.key: i for i, listing in enumerate(self.listings)}
         if len({x.key for x in self.listings}) != len(self.listings):
             raise ValueError("duplicate listing in index")
         self.lookup: dict[tuple[str, str], set[int]] = defaultdict(set)
@@ -90,16 +92,31 @@ class CandidateIndex:
             raise ValueError("k must be positive")
         channels: dict[int, set[str]] = defaultdict(set)
         scores: dict[int, float] = {}
+        similarities = None
         if self.matrix is not None:
             vector = self.vectorizer.transform([retrieval_text(listing)])
             similarities = (vector @ self.matrix.T).tocsr()
-            for i, value in zip(similarities.indices, similarities.data, strict=True):
-                if value > 0:
-                    channels[int(i)].add("tfidf")
-                    scores[int(i)] = float(value)
+            eligible = (similarities.data > 0) & (
+                similarities.indices != self.positions.get(listing.key, -1)
+            )
+            positions = similarities.indices[eligible]
+            values = similarities.data[eligible]
+            # Listing positions are in stable ID order, including at tied scores.
+            best = np.lexsort((positions, -values))[:k]
+            for i, value in zip(positions[best], values[best], strict=True):
+                channels[int(i)].add("tfidf")
+                scores[int(i)] = float(value)
         for key in identifier_keys(listing):
             for i in self.lookup.get(key, ()):
                 channels[i].add(key[0])
+        if similarities is not None and channels:
+            # Identifier hits outside the lexical top-k still need their text evidence.
+            selected = np.isin(similarities.indices, list(channels)) & (similarities.data > 0)
+            for i, value in zip(
+                similarities.indices[selected], similarities.data[selected], strict=True
+            ):
+                channels[int(i)].add("tfidf")
+                scores[int(i)] = float(value)
         eligible = (i for i in channels if self.listings[i].key != listing.key)
 
         def rank_key(i: int):

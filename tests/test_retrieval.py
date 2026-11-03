@@ -59,3 +59,32 @@ def test_invalid_lifecycle_and_duplicate_input():
         CandidateIndex().fit([a]).build([a, a])
     with pytest.raises(ValueError, match="positive"):
         CandidateIndex().fit([a]).build([a]).query(a, 0)
+
+
+def test_bounded_text_pool_matches_exhaustive_ranking():
+    from catalog_identity.retrieval import identifier_keys, retrieval_text
+
+    records = [
+        record(str(i), f"lamp model {i % 7} color {i % 3}", brand="Aster", model=f"M{i % 9}")
+        for i in range(60)
+    ]
+    index = CandidateIndex().fit(records).build(records)
+    for query in records[::9]:
+        vector = index.vectorizer.transform([retrieval_text(query)])
+        scores = (vector @ index.matrix.T).toarray()[0]
+        expected = []
+        for i, other in enumerate(index.listings):
+            if other.key == query.key:
+                continue
+            identifiers = set(identifier_keys(query)) & set(identifier_keys(other))
+            sources = {kind for kind, _ in identifiers}
+            if scores[i] > 0:
+                sources.add("tfidf")
+            if sources:
+                expected.append((other.key, scores[i], tuple(sorted(sources))))
+        expected.sort(
+            key=lambda x: (-int("gtin" in x[2]), -int("brand_model" in x[2]), -x[1], x[0])
+        )
+        for k in (1, 3, 20, 100):
+            actual = index.query(query, k)
+            assert [(c.listing_id, c.text_score, c.sources) for c in actual] == expected[:k]

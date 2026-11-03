@@ -161,6 +161,41 @@ def test_database_survives_reopen(tmp_path):
     other.close()
 
 
+def test_retrieval_cache_tracks_changes_from_another_catalog(tmp_path, monkeypatch):
+    from catalog_identity.retrieval import CandidateIndex
+
+    database = Database("sqlite:///" + str(tmp_path / "cache.db"))
+    second_database = Database("sqlite:///" + str(tmp_path / "cache.db"))
+    catalog, other = Catalog(database), Catalog(second_database)
+    seed(catalog)
+    builds = []
+    fit = CandidateIndex.fit
+
+    def count_fit(index, records):
+        builds.append(len(records))
+        return fit(index, records)
+
+    monkeypatch.setattr(CandidateIndex, "fit", count_fit)
+    record = showcase()[0]
+    catalog.retrieve(record.key)
+    catalog.retrieve(record.key)
+    assert len(builds) == 1
+    other.ingest([record.model_copy(update={"title": "Updated source title"})])
+    catalog.retrieve(record.key)
+    assert len(builds) == 2
+    query = CandidateIndex.query
+
+    def concurrent_write(index, listing, k):
+        other.ingest([record.model_copy(update={"title": "Changed during retrieval"})])
+        return query(index, listing, k)
+
+    monkeypatch.setattr(CandidateIndex, "query", concurrent_write)
+    with pytest.raises(Conflict, match="changed during retrieval"):
+        catalog.retrieve(record.key)
+    database.close()
+    second_database.close()
+
+
 @pytest.mark.skipif(
     not os.getenv("TEST_DATABASE_URL"), reason="PostgreSQL integration URL not configured"
 )

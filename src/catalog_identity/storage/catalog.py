@@ -3,6 +3,7 @@ import json
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
+from threading import Lock
 from uuid import uuid4
 
 from sqlalchemy import delete, insert, or_, select, update
@@ -39,6 +40,8 @@ class Catalog:
         self.model = None
         self.model_id = "structured-evidence-v1"
         self.policy = None
+        self._retrieval_lock = Lock()
+        self._retrieval_cache = None
         if model_directory:
             from catalog_identity.evaluation.runner import file_hash
             from catalog_identity.matching.learned import LearnedMatcher
@@ -181,24 +184,39 @@ class Catalog:
             )
             return [dict(row) for row in rows]
 
-    def snapshot(self):
+    def snapshot(self, keys=None):
         with self.db.transaction() as connection:
-            rows = connection.execute(select(tables.listings)).mappings().all()
+            statement = select(tables.listings)
+            if keys is not None:
+                statement = statement.where(tables.listings.c.id.in_(keys))
+            rows = connection.execute(statement).mappings().all()
             return (
                 self._state(connection),
                 {row["id"]: Listing.model_validate(row["data"]) for row in rows},
                 {row["id"]: row["revision"] for row in rows},
             )
 
+    def _retrieval_index(self):
+        with self._retrieval_lock:
+            with self.db.transaction() as connection:
+                revision = self._state(connection)["revision"]
+            if self._retrieval_cache is None or self._retrieval_cache[0] != revision:
+                state, listings, _ = self.snapshot()
+                normalized = {key: normalize(value) for key, value in listings.items()}
+                index = None
+                if normalized:
+                    records = list(normalized.values())
+                    index = CandidateIndex().fit(records).build(records)
+                self._retrieval_cache = (state["revision"], index, normalized)
+            return self._retrieval_cache
+
     def retrieve(self, key, k=20):
-        state, listings, _ = self.snapshot()
-        if key not in listings:
+        revision, index, normalized = self._retrieval_index()
+        if key not in normalized:
             raise NotFound("listing not found")
-        normalized = {key: normalize(value) for key, value in listings.items()}
-        index = CandidateIndex().fit(list(normalized.values())).build(list(normalized.values()))
         result = [asdict(c) for c in index.query(normalized[key], k)]
         with self.db.transaction() as connection:
-            if self._state(connection)["revision"] != state["revision"]:
+            if self._state(connection)["revision"] != revision:
                 raise Conflict("catalog changed during retrieval; retry")
             connection.execute(delete(tables.candidates).where(tables.candidates.c.query_id == key))
             for candidate in result:
@@ -206,7 +224,7 @@ class Catalog:
                     insert(tables.candidates).values(
                         query_id=key,
                         candidate_id=candidate["listing_id"],
-                        catalog_revision=state["revision"],
+                        catalog_revision=revision,
                         data=candidate,
                     )
                 )
@@ -216,7 +234,7 @@ class Catalog:
         if left == right:
             raise ValueError("choose two distinct listings")
         left, right = sorted((left, right))
-        _, listings, revisions = self.snapshot()
+        _, listings, revisions = self.snapshot((left, right))
         if left not in listings or right not in listings:
             raise NotFound("listing not found")
         a, b = normalize(listings[left]), normalize(listings[right])
@@ -489,7 +507,11 @@ class Catalog:
                 or (r["level"] == "family" and r["decision"] == "reject")
             }
             scored = (
-                connection.execute(select(tables.pairs).where(tables.pairs.c.stale.is_(False)))
+                connection.execute(
+                    select(tables.pairs).where(
+                        tables.pairs.c.stale.is_(False) & (tables.pairs.c.model_id == self.model_id)
+                    )
+                )
                 .mappings()
                 .all()
             )
