@@ -314,6 +314,17 @@ class Catalog:
                 (tables.reviews.c.left == left) & (tables.reviews.c.right == right),
                 (tables.reviews.c.left == right) & (tables.reviews.c.right == left),
             )
+            if level == "variant" and decision == "match":
+                rejected_family = connection.execute(
+                    select(tables.reviews.c.id).where(
+                        pair_keys
+                        & (tables.reviews.c.level == "family")
+                        & (tables.reviews.c.decision == "reject")
+                        & tables.reviews.c.stale.is_(False)
+                    )
+                ).first()
+                if rejected_family:
+                    raise Conflict("resolve the family rejection before accepting an exact variant")
             connection.execute(
                 update(tables.reviews)
                 .where(pair_keys & (tables.reviews.c.level == level))
@@ -475,7 +486,8 @@ class Catalog:
             resolved = {
                 tuple(sorted((r["left"], r["right"])))
                 for r in current_reviews
-                if r["decision"] != "uncertain"
+                if (r["level"] == "variant" and r["decision"] != "uncertain")
+                or (r["level"] == "family" and r["decision"] == "reject")
             }
             scored = (
                 connection.execute(select(tables.pairs).where(tables.pairs.c.stale.is_(False)))

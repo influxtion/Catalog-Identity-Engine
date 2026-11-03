@@ -42,6 +42,10 @@ def main(argv: list[str] | None = None) -> int:
         "cluster-showcase", help="Evaluate synthetic hierarchical clusters"
     )
     clusters.add_argument("--output", type=Path, required=True)
+    incremental = commands.add_parser(
+        "incremental-showcase", help="Compare synthetic update behavior"
+    )
+    incremental.add_argument("--output", type=Path, required=True)
     scale = commands.add_parser(
         "benchmark-scale", help="Measure lexical retrieval on synthetic data"
     )
@@ -54,6 +58,11 @@ def main(argv: list[str] | None = None) -> int:
     profiling.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command == "incremental-showcase":
+            from catalog_identity.evaluation.incremental import incremental_showcase
+
+            print(json.dumps(incremental_showcase(args.output)["steps"], indent=2))
+            return 0
         if args.command == "cluster-showcase":
             from catalog_identity.evaluation.cluster_showcase import cluster_showcase
 

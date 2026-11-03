@@ -1,3 +1,5 @@
+import os
+import platform
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
@@ -15,6 +17,10 @@ def implementation_manifest():
             pass
     return {
         "git": git_metadata(root),
+        "platform": platform.platform(),
+        "python": platform.python_version(),
+        "processor": platform.processor(),
+        "logical_cpus": os.cpu_count(),
         "dependencies": dependencies,
         "source_sha256": {
             p.relative_to(package).as_posix(): file_hash(p) for p in sorted(package.rglob("*.py"))

@@ -9,6 +9,11 @@ test("explore, compare, and record a review", async ({ page }) => {
   await page.getByRole("textbox", { name: "Search listings" }).fill("Lumen");
   await expect(page.locator(".listing-table tbody tr")).toHaveCount(3);
   await page.getByRole("textbox", { name: "Search listings" }).clear();
+  await page.getByRole("button", { name: "Show family members" }).click();
+  await expect(page.locator(".listing-table tbody tr")).toHaveCount(5);
+  await page.getByRole("button", { name: "Show variant members" }).click();
+  await expect(page.locator(".listing-table tbody tr")).toHaveCount(2);
+  await page.getByRole("textbox", { name: "Search listings" }).clear();
   await page
     .getByRole("button", {
       name: "Select Aster H1 Wireless Headphones · Black",
@@ -36,7 +41,15 @@ test("explore, compare, and record a review", async ({ page }) => {
     .getByRole("button", { name: "Identity graph", exact: true })
     .click();
   await expect(
-    page.getByRole("img", { name: "Identity relationship graph" }),
+    page.getByRole("group", { name: "Identity relationship graph" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", {
+      name: /^Open Aster H1 Wireless Headphones · Black from/,
+    })
+    .press("Enter");
+  await expect(
+    page.getByRole("heading", { name: "Identity explorer", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Evaluations", exact: true }).click();
   await expect(
@@ -45,6 +58,13 @@ test("explore, compare, and record a review", async ({ page }) => {
   await expect(
     page.getByText("Enriched logistic", { exact: true }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Retrieval cost measurements" }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "test-results/dashboard-evaluation.png",
+    fullPage: true,
+  });
 });
 
 test("invalid imports show an error and valid records persist", async ({
@@ -59,17 +79,16 @@ test("invalid imports show an error and valid records persist", async ({
     .getByRole("button", { name: "Import listings", exact: true })
     .click();
   await expect(page.getByRole("dialog").getByRole("alert")).toBeVisible();
-  await page
-    .getByRole("textbox", { name: "Listing JSON", exact: true })
-    .fill(
-      JSON.stringify([
-        {
-          source: "test-source",
-          source_id: "ui-import",
-          title: "Fictional imported lamp",
-        },
-      ]),
-    );
+  await page.getByRole("textbox", { name: "Listing JSON", exact: true }).fill(
+    JSON.stringify([
+      {
+        source: "test-source",
+        source_id: "ui-import",
+        title: "Fictional imported lamp",
+        price: "12.50",
+      },
+    ]),
+  );
   await page
     .getByRole("button", { name: "Import listings", exact: true })
     .click();
@@ -78,6 +97,7 @@ test("invalid imports show an error and valid records persist", async ({
     .getByRole("textbox", { name: "Search listings" })
     .fill("imported lamp");
   await expect(page.locator(".listing-table tbody tr")).toHaveCount(1);
+  await expect(page.locator(".listing-table .price")).toHaveText("12.50");
 });
 
 test("mobile navigation and desktop screenshot", async ({ page }) => {

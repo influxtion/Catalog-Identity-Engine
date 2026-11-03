@@ -1,0 +1,33 @@
+{
+  "synthetic": true,
+  "scope": "Lexical retrieval only; no accuracy or end-to-end service scaling claim.",
+  "memory_scope": "Sampled process RSS at 5 ms intervals, including interpreter and imported libraries. Not an exact peak.",
+  "runs": [
+    {
+      "build_listings_per_second": 13595.601551681144,
+      "build_seconds_including_vocabulary": 0.07355319999624044,
+      "listings": 1000,
+      "queries": 100,
+      "queries_per_second": 108.91516360600725,
+      "query_p50_ms": 8.929149989853613,
+      "query_p95_ms": 9.949350015085656,
+      "returned_candidates": 5000,
+      "rss_before_bytes": 141508608,
+      "sampled_peak_rss_bytes": 149393408,
+      "sparse_matrix_bytes": 1138076
+    },
+    {
+      "build_listings_per_second": 12147.484553746986,
+      "build_seconds_including_vocabulary": 0.823215699987486,
+      "listings": 10000,
+      "queries": 100,
+      "queries_per_second": 7.4129297107734695,
+      "query_p50_ms": 126.93519997992553,
+      "query_p95_ms": 180.85777998494447,
+      "returned_candidates": 5000,
+      "rss_before_bytes": 149463040,
+      "sampled_peak_rss_bytes": 207699968,
+      "sparse_matrix_bytes": 11742032
+    }
+  ]
+}

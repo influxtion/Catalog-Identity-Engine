@@ -138,4 +138,9 @@ def create_app(database_url=None, model_directory=None):
         path = Path(__file__).resolve().parents[1] / "benchmarks.json"
         return json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
 
+    @app.get("/performance")
+    def performance():
+        path = Path(__file__).resolve().parents[1] / "performance.json"
+        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
     return app

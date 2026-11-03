@@ -110,6 +110,30 @@ def test_jobs_are_idempotent_and_failures_are_durable(client, tmp_path):
         catalog.finish_job(job["id"], result={})
 
 
+def test_family_review_keeps_unresolved_variant_in_queue(client):
+    records = showcase()
+    catalog = client.app.state.catalog
+    seed(catalog)
+    left, right = records[0].key, records[4].key
+    catalog.inspect_pair(left, right)
+    catalog.submit_review(left, right, "family", "match", "Family verified; color absent", 1, 1)
+    assert any({row["left"], row["right"]} == {left, right} for row in catalog.review_queue())
+    catalog.submit_review(left, right, "variant", "reject", "Supplier confirmed other color", 1, 1)
+    assert not any({row["left"], row["right"]} == {left, right} for row in catalog.review_queue())
+
+
+def test_variant_acceptance_cannot_override_active_family_rejection(client):
+    records = showcase()
+    catalog = client.app.state.catalog
+    seed(catalog)
+    left, right = records[0].key, records[1].key
+    catalog.submit_review(left, right, "family", "reject", "Supplier model incorrect", 1, 1)
+    with pytest.raises(Conflict, match="family rejection"):
+        catalog.submit_review(left, right, "variant", "match", "Same supplied attributes", 1, 1)
+    catalog.submit_review(left, right, "family", "match", "Verified the supplier correction", 1, 1)
+    catalog.submit_review(left, right, "variant", "match", "Variant details now verified", 1, 1)
+
+
 def test_search_retrieval_and_bad_requests(client):
     records = showcase()
     seed(client.app.state.catalog)

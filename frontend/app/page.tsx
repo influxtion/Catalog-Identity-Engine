@@ -5,6 +5,7 @@ import { Icon } from "@/components/icons";
 import { ProductIcon, Tags } from "@/components/product";
 import { PairDialog } from "@/components/pair-dialog";
 import { ImportDialog } from "@/components/import-dialog";
+import { RetrievalCosts } from "@/components/retrieval-costs";
 import {
   api,
   Benchmark,
@@ -14,6 +15,7 @@ import {
   Listing,
   Overview,
   Pair,
+  RetrievalCostReport,
   shortId,
   priceLabel,
 } from "@/lib/api";
@@ -34,6 +36,7 @@ export default function Dashboard() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
+  const [costs, setCosts] = useState<RetrievalCostReport | null>(null);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -46,7 +49,7 @@ export default function Dashboard() {
   const [graphLevel, setGraphLevel] = useState("family");
   const load = useCallback(async () => {
     try {
-      const [rows, f, v, q, o, j, b] = await Promise.all([
+      const [rows, f, v, q, o, j, b, c] = await Promise.all([
         api<Listing[]>("/listings?limit=200"),
         api<Identity[]>("/identities?level=family"),
         api<Identity[]>("/identities?level=variant"),
@@ -54,6 +57,7 @@ export default function Dashboard() {
         api<Overview>("/overview"),
         api<Job[]>("/jobs"),
         api<Benchmark[]>("/benchmarks"),
+        api<RetrievalCostReport | null>("/performance"),
       ]);
       setListings(rows);
       setFamilies(f);
@@ -62,6 +66,7 @@ export default function Dashboard() {
       setOverview(o);
       setJobs(j);
       setBenchmarks(b);
+      setCosts(c);
       setSelected((current) =>
         current && rows.some((row) => row.id === current)
           ? current
@@ -100,13 +105,15 @@ export default function Dashboard() {
     };
   }, [selected, overview?.catalog_revision]);
   const selectedListing = listings.find((row) => row.id === selected);
+  const familyOf = (id: string) =>
+    families.find((group) => group.members.includes(id));
+  const variantOf = (id: string) =>
+    variants.find((group) => group.members.includes(id));
   const visible = listings.filter((row) =>
-    `${row.data.title} ${row.data.brand} ${row.data.model} ${row.data.source}`
+    `${row.data.title} ${row.data.brand} ${row.data.model} ${row.data.source} ${row.data.source_id} ${familyOf(row.id)?.id || ""} ${variantOf(row.id)?.id || ""}`
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
-  const familyOf = (id: string) =>
-    families.find((family) => family.members.includes(id));
   const inspect = async (left: string, right: string) => {
     setBusy(true);
     try {
@@ -392,20 +399,36 @@ export default function Dashboard() {
                         </span>
                         <h2>{selectedListing.data.title}</h2>
                         <Tags listing={selectedListing} />
-                        <div className="identity-summary">
-                          <Icon name="link" size={18} />
-                          <div>
-                            <span>Product family</span>
-                            <code>
-                              {familyOf(selectedListing.id)?.id.slice(0, 18) ||
-                                "Awaiting rebuild"}
-                            </code>
-                          </div>
-                          <span className="member-count">
-                            {familyOf(selectedListing.id)?.members.length ?? 1}{" "}
-                            listings
-                          </span>
-                        </div>
+                        {(["family", "variant"] as const).map((level) => {
+                          const group =
+                            level === "family"
+                              ? familyOf(selectedListing.id)
+                              : variantOf(selectedListing.id);
+                          return (
+                            <button
+                              key={level}
+                              className="identity-summary"
+                              disabled={!group}
+                              aria-label={`Show ${level} members`}
+                              onClick={() => group && setQuery(group.id)}
+                            >
+                              <Icon name="link" size={18} />
+                              <div>
+                                <span>
+                                  {level === "family"
+                                    ? "Product family"
+                                    : "Variant group"}
+                                </span>
+                                <code>
+                                  {group?.id.slice(0, 18) || "Awaiting rebuild"}
+                                </code>
+                              </div>
+                              <span className="member-count">
+                                {group?.members.length ?? 1} listings
+                              </span>
+                            </button>
+                          );
+                        })}
                         <div className="section-heading">
                           <h3>Candidate matches</h3>
                           <span>Top {candidates.length}</span>
@@ -533,7 +556,7 @@ export default function Dashboard() {
                 <div className="graph-stage">
                   <svg
                     viewBox={`0 0 920 ${Math.max(300, Math.ceil(listings.length / 6) * 140)}`}
-                    role="img"
+                    role="group"
                     aria-label="Identity relationship graph"
                   >
                     {[
@@ -565,6 +588,16 @@ export default function Dashboard() {
                     {listings.map((listing, i) => (
                       <g
                         key={listing.id}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Open ${listing.data.title} from ${listing.data.source}`}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setSelected(listing.id);
+                            setSection("explorer");
+                          }
+                        }}
                         transform={`translate(${70 + (i % 6) * 155},${65 + Math.floor(i / 6) * 140})`}
                         onClick={() => {
                           setSelected(listing.id);
@@ -710,6 +743,7 @@ export default function Dashboard() {
                     </div>
                   ))}
                 </div>
+                <RetrievalCosts report={costs} />
                 <div className="section-heading history-heading">
                   <h3>Evaluation jobs</h3>
                   <button

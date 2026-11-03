@@ -76,6 +76,18 @@ export type Benchmark = {
   retrieval: Record<string, number>;
   note: string;
 };
+export type RetrievalCostReport = {
+  synthetic: boolean;
+  scope: string;
+  runs: {
+    listings: number;
+    query_p50_ms: number;
+    query_p95_ms: number;
+    build_seconds_including_vocabulary: number;
+    queries_per_second: number;
+    sampled_peak_rss_bytes: number;
+  }[];
+};
 
 export async function api<T>(path: string, payload?: unknown): Promise<T> {
   const response = await fetch(`/api/catalog${path}`, {
@@ -98,11 +110,11 @@ export function priceLabel(listing: Listing) {
   const { price, currency } = listing.data;
   if (!price) return "—";
   const amount = Number(price);
-  if (!Number.isFinite(amount)) return price;
+  if (!Number.isFinite(amount) || !currency) return price;
   try {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: currency || "USD",
+      currency,
       maximumFractionDigits: 2,
     }).format(amount);
   } catch {

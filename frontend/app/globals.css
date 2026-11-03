@@ -612,6 +612,8 @@ main {
   padding: 4px 5px;
 }
 .identity-summary {
+  width: 100%;
+  text-align: left;
   display: flex;
   align-items: center;
   gap: 8px;

@@ -34,3 +34,19 @@ def test_scale_report_measures_cost_without_accuracy_claims(tmp_path):
     assert report["runs"][0]["queries"] == 4
     assert report["runs"][0]["query_p95_ms"] > 0
     assert report["runs"][0]["sampled_peak_rss_bytes"] > 0
+
+
+def test_incremental_memberships_match_fresh_rebuild_and_retain_unchanged_ids(tmp_path):
+    pytest.importorskip("sqlalchemy")
+    from catalog_identity.evaluation.incremental import incremental_showcase
+
+    report = incremental_showcase(tmp_path / "updates")
+    assert report["synthetic"] and report["identical_reingestion_changed"] == 0
+    for step in report["steps"]:
+        assert step["changed_listings"] == 1
+        assert step["stale_before_rebuild"] and not step["stale_after_rebuild"]
+        for result in step["levels"].values():
+            assert result["matches_fresh_partition"]
+            assert result["unchanged_groups"] == result["unchanged_ids_retained"]
+    assert report["steps"][0]["levels"]["variant"]["groups"] == 8
+    assert report["steps"][1]["levels"]["variant"]["groups"] == 9
