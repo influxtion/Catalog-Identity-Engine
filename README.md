@@ -162,6 +162,22 @@ threshold. **The 99% precision aspiration is not met.** The test has 1,000 offer
 commercial catalog. [Experiment records](experiments/README.md) include counts, hashes,
 model comparisons, calibration, retrieval ablations, and reproduction commands.
 
+A later **validation-only** comparison uses the official large development split and stronger
+specification features. On the same 4,500 validation pairs, LightGBM's false matches fell from
+four to zero; correct matches fell from 25 to 22 (recall 5.0% to 4.4%). This is a precision
+tradeoff observed on development data, not a new test result or a 99% precision guarantee.
+The earlier frozen test results above remain unchanged.
+
+```sh
+# Extract the official *_train_large.json.gz and *_valid_large.json.gz files locally first.
+uv run catalog-identity develop --config configs/wdc-products-large.json --feature-version 3 --output runs/development-large
+uv run catalog-identity validation-errors --config configs/wdc-products-large.json --model runs/development-large/lightgbm --output runs/validation-errors-large
+```
+
+The dashboard can queue these validation-only comparisons and display completed summaries.
+The API's default evaluation mode leaves test data unopened; baseline test evaluation is an
+explicit separate action. Version 2 features remain the CLI default for reproducibility.
+
 Hierarchical clustering uses category-specific rules, complete cross-cluster support, and
 hard-conflict/human-rejection constraints. Unknown variant attributes abstain. Its synthetic
 results are not real-world cluster accuracy. Incremental changes invalidate evidence and
@@ -170,11 +186,13 @@ reconcile opaque IDs after a small-catalog rebuild; this is not a streaming impl
 ```sh
 uv run catalog-identity cluster-showcase --output runs/clusters
 uv run catalog-identity incremental-showcase --output runs/updates
-uv run catalog-identity benchmark-scale --sizes 1000 10000 --queries 100 --output runs/scaling
+uv run catalog-identity benchmark-scale --sizes 1000 10000 100000 --queries 100 --output runs/scaling
 uv run catalog-identity develop --config configs/wdc-products.example.json --negative-policy random_only --output runs/random-negatives
 ```
 
-Scaling measurements cover lexical retrieval on synthetic populations through 10,000 listings.
+Scaling measurements cover lexical retrieval on synthetic populations through 100,000 listings.
+The latest run measured 99 ms median / 132 ms p95 queries at 100k, with about 742 MiB sampled
+process RSS. At 10k, median query time fell from 133 ms to 8.6 ms while preserving ranking.
 The live candidate endpoint caches its index by catalog revision; the dashboard loads at most 200
 listings. Structured graph generation is capped at 500 listings per brand/model block.
 There is no 100k service claim, real human-labeled hierarchical evaluation, image experiment,

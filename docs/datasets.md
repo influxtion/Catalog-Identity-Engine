@@ -29,7 +29,7 @@ The [WDC Product Data Corpus v2](https://webdatacommons.org/largescaleproductcor
 has its own schema, derived from older crawl data. It is not WDC Products. Unlabeled
 corpus experiments can measure retrieval cost and throughput, not matching accuracy.
 A corpus adapter is not implemented. Current cost measurements use separately generated
-synthetic listings through 10,000 records; they do not represent corpus scale or accuracy.
+synthetic listings through 100,000 records; they do not represent corpus distribution or accuracy.
 
 ## Licensing and redistribution
 

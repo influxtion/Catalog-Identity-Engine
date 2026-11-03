@@ -127,8 +127,8 @@ export function DevelopmentPanel({
         </button>
       </div>
       <p className="helper">
-        Requires the chosen local train/validation files, the models extra, and
-        an active worker. Completed comparisons appear below.
+        Requires the chosen local train/validation files and an active worker.
+        Completed comparisons appear below.
       </p>
       {message && (
         <p role="status" className="helper">

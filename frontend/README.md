@@ -20,6 +20,10 @@ Set the server environment variable `CATALOG_API_URL` to change it.
 Features: listing search and source provenance, family/variant membership, ranked
 candidates, side-by-side inspection, revision-aware reviews, accepted/rejected graph
 links, identity history, measured benchmark results, and queued evaluation jobs.
+The evaluation screen separates recorded test results from validation-only development
+comparisons. Validation jobs select an official development split and feature version, leave
+test files unopened, and display their completed summaries. The retrieval cost table includes
+the measured 100k synthetic run; it is not a full-service throughput claim.
 The explorer loads up to 200 records and filters that loaded view. Large-catalog
 pagination and graph virtualization are future work. No real product images are used.
 

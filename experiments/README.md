@@ -140,3 +140,70 @@ uv run catalog-identity benchmark-scale --sizes 1000 10000 --queries 100 --outpu
 
 Cross-encoder, image, real human-labeled hierarchy and larger-corpus experiments remain unrun.
 The current evidence supports a reproducible inspection prototype, not production acceptance.
+
+## Precision development and 100k lexical retrieval
+
+[precision-development-v4.json](precision-development-v4.json) records the follow-up experiments,
+including unsuccessful comparisons. **No test file was opened for these experiments.** All
+matcher figures below are full-validation diagnostics, including prior calibration and
+policy-selection data. They are not independent quality estimates.
+
+The inspected high-scoring validation errors involved quantity differences, memory form
+factors, specific model codes, and edition terms. Feature version 3 adds word/bigram similarity,
+unshared-word weights and symmetric distinctions for these patterns. Missing information,
+one-sided hints and explicit conflicts remain different features; no universal benchmark
+veto or invented label was introduced. Existing version 2 artifacts remain loadable.
+
+The initial small-split comparison was mixed:
+
+| Matcher | Correct / false matches | Precision | Recall | AP |
+| --- | ---: | ---: | ---: | ---: |
+| Previous logistic | 35 / 4 | 89.7% | 7.0% | 0.63302 |
+| Specification-feature logistic | 7 / 1 | 87.5% | 1.4% | 0.70510 |
+| Previous LightGBM | 20 / 0 | 100.0% | 4.0% | 0.67236 |
+| Specification-feature LightGBM | 27 / 1 | 96.4% | 5.4% | 0.73130 |
+
+Stronger ranking AP alone did not produce a uniformly better precision operating point.
+The next comparison used the official large train/validation files already present in the
+local archive: 19,835 training pairs (8,471 positive) and 4,500 validation pairs (500 positive).
+The large validation partition has 1,289 calibration pairs, 1,178 policy pairs and 2,033
+excluded cross-partition pairs. The published files were not reshuffled or mixed across sizes.
+
+| Large-split matcher | Correct / false matches | Precision | Recall | AP |
+| --- | ---: | ---: | ---: | ---: |
+| Previous LightGBM features | 25 / 4 | 86.2% | 5.0% | 0.52956 |
+| Specification features | 22 / 0 | 100.0% | 4.4% | 0.62306 |
+
+The version 3 LightGBM threshold is 0.8902757707668776, selected on the policy subset using
+the same weighted 99% empirical target. It recovered 13 policy positives without false
+positives; the full-validation replay recovered 22. This is a useful observed precision/recall
+tradeoff, but zero errors among 22 predictions does not establish 99% production precision.
+This model remains an inspection candidate. The previous frozen test result is unchanged.
+
+```sh
+uv run catalog-identity develop --config configs/wdc-products-large.json --feature-version 2 --output runs/large-previous
+uv run catalog-identity develop --config configs/wdc-products-large.json --feature-version 3 --output runs/large-specifications
+uv run catalog-identity validation-errors --config configs/wdc-products-large.json --model runs/large-specifications/lightgbm --output runs/large-errors
+```
+
+Use `configs/wdc-products.example.json` for the small-split comparison. Error exports contain
+pair titles, feature evidence and calibration/policy/cross-partition membership, and stay in
+ignored local run directories. The committed aggregate excludes product text and PR curves.
+
+The lexical ranking implementation now selects a bounded text candidate pool in NumPy before
+building Python evidence objects. Identifier priority and deterministic ties are preserved;
+tests compare outputs with exhaustive ranking. The API caches indexes by database revision
+and rejects stale results when another process writes during retrieval. Pair inspection loads
+only the requested pair rather than the entire catalog.
+
+| Synthetic listings | Build incl. vocabulary | Query p50 / p95 | Queries/sec | Sampled RSS |
+| --- | ---: | ---: | ---: | ---: |
+| 1,000 | 0.073 s | 1.4 / 1.5 ms | 725.6 | 142.2 MiB |
+| 10,000 | 0.728 s | 8.6 / 18.9 ms | 101.1 | 199.6 MiB |
+| 100,000 | 10.738 s | 99.2 / 132.0 ms | 9.7 | 742.1 MiB |
+
+This run used clean commit `fd6a2ad`, seed 42, k=50 and 100 queries per size. Compared with
+the earlier 10k run, median lexical query time fell from 132.9 to 8.6 ms on this machine.
+Memory remains sampled process RSS, not an exact peak. This is a lexical retriever measurement
+on synthetic data; it excludes network requests, persistence, clustering and embedding
+inference. No real-corpus accuracy or full-service 100k claim follows from it.

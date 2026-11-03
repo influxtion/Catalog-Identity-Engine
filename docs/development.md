@@ -96,6 +96,13 @@ allocations from earlier sizes; sampling can miss brief peaks. These are local-p
 not end-to-end API latency or exact peak memory. Manifests record source/lock hashes and
 environment information. Model artifact sizes accompany the published aggregates.
 
-Cross-encoder reranking, permitted-image comparison, larger-corpus/100k experiments and a real
+Cross-encoder reranking, permitted-image comparison, larger-corpus/end-to-end 100k experiments and a real
 human-annotated hierarchical set have not been run. They need evidence or suitable data before
 adding complexity. No performance or licensing result is implied for these paths.
+
+The later synthetic lexical benchmark reaches 100k listings; its scope excludes the live
+service. The process-local service cache is revision-aware but cold builds are synchronous.
+Normalized listing evidence now persists separately from raw source observations, with an
+additive schema migration. API writes and rebuild jobs are atomic. Interrupted running jobs
+still need operator recovery; leases/retries, persistent indexes, large-catalog dashboard
+pagination, and independently annotated hierarchical evaluation remain open work.
