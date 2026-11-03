@@ -56,13 +56,14 @@ export default function Dashboard() {
   const [graphLevel, setGraphLevel] = useState("family");
   const load = useCallback(async () => {
     try {
-      const [rows, f, v, q, o, j, b, c, d, e] = await Promise.all([
+      // Read job status first so completed-job views cannot predate its commit.
+      const j = await api<Job[]>("/jobs");
+      const [rows, f, v, q, o, b, c, d, e] = await Promise.all([
         api<Listing[]>("/listings?limit=200"),
         api<Identity[]>("/identities?level=family"),
         api<Identity[]>("/identities?level=variant"),
         api<Pair[]>("/reviews"),
         api<Overview>("/overview"),
-        api<Job[]>("/jobs"),
         api<Benchmark[]>("/benchmarks"),
         api<RetrievalCostReport | null>("/performance"),
         api<DevelopmentBenchmark | null>("/development-benchmarks"),
