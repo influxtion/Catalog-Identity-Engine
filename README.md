@@ -107,6 +107,15 @@ The current retriever uses sparse per-query products, avoiding a dense all-pairs
 an exact baseline for benchmark-sized populations; it is not an ANN index or a 100k-listing
 scaling result. Evidence features describe observations, not causal explanations of a match.
 
+## First measured result
+
+On WDC Products with 80% corner cases, small development size, and 100% unseen test entities,
+directed retrieval recall@50 was **99.4%** over the 1,000-offer test population. The logistic
+matcher did **not** meet the validation precision/support requirement, so automatic matching
+was disabled. The test average precision was 0.46231. This is a starting baseline, not a
+production-ready matcher. See [the experiment record](experiments/README.md) for counts,
+limitations, hashes, and reproduction instructions.
+
 Read [PROJECT_SPEC.md](PROJECT_SPEC.md) for the full design and
 [docs/datasets.md](docs/datasets.md) for benchmark semantics and data restrictions.
 

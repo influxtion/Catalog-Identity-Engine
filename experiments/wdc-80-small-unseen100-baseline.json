@@ -1,0 +1,450 @@
+{
+  "archive_sha256": "b2044939cee5ea6f12148a2f3551508de3cb77660dfc91767c44daaf9d8a9c4a",
+  "command": "uv run catalog-identity evaluate --config configs/wdc-products.example.json --output runs/wdc-baseline-80-small-unseen100",
+  "config": {
+    "dataset_name": "wdc-products",
+    "dataset_version": "2022-12-22",
+    "max_features": 50000,
+    "minimum_validation_matches": 5,
+    "pipeline_k": 20,
+    "protocol": {
+      "corner_cases": 80,
+      "development_size": "small",
+      "test_unseen": 100
+    },
+    "regularization": 1.0,
+    "reject_threshold": 0.1,
+    "retrieval_k": [
+      10,
+      20,
+      50
+    ],
+    "seed": 42,
+    "synthetic": false,
+    "target_precision": 0.99,
+    "test": "wdcproducts80cc20rnd100un_gs.json.gz",
+    "test_entity_disjoint": true,
+    "train": "wdcproducts80cc20rnd000un_train_small.json.gz",
+    "validation": "wdcproducts80cc20rnd000un_valid_small.json.gz"
+  },
+  "description": "First held-out baseline run; aggregate results only, no product records.",
+  "manifest": {
+    "created_at_utc": "2026-11-03T21:14:36.363045+00:00",
+    "dependencies": {
+      "numpy": "2.5.4",
+      "polars": "1.44.2",
+      "pydantic": "2.14.2",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1"
+    },
+    "feature_version": "1",
+    "git": {
+      "commit": "9b089f4f99d86bfc2709cb962488ae9be96e7e2a",
+      "working_tree_status": ""
+    },
+    "inputs": {
+      "test": {
+        "path": "wdcproducts80cc20rnd100un_gs.json.gz",
+        "sha256": "258f9b408e715410f07480bf4ad39788a10d5cee1512e322091de43dafae1297"
+      },
+      "train": {
+        "path": "wdcproducts80cc20rnd000un_train_small.json.gz",
+        "sha256": "1915a92de76ddbf63a6c4d7ff3162df98f505033a8ad12ee7072b78b083d77c6"
+      },
+      "validation": {
+        "path": "wdcproducts80cc20rnd000un_valid_small.json.gz",
+        "sha256": "892e8d39cc8230dce5039a4bded16be1237d5c5c37b94a37404226d349ef3df8"
+      }
+    },
+    "lock_sha256": "75580c001da9c5afd21bd4a12ef7dc24dbfb935b1c6165c356f4654d110eabf9",
+    "normalization_version": "1",
+    "package_version": "0.1.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "source_sha256": {
+      "__init__.py": "bd940e7034c9701c400f8c858a9327eb82f81ba780d29faa2589e7769225e0c8",
+      "cli.py": "87b7366170fc8a0b13187acaf3a60c4b77d0b03cc4079923174414cc049965c1",
+      "evaluation\\__init__.py": "485db8519fd089d9a8a13171c30ce18b59865f851434e3d063b5f50dad668d26",
+      "evaluation\\config.py": "477994b0f3755a26be5ee3013b6a055553a640849555d65b100bfca5c60068c5",
+      "evaluation\\metrics.py": "a39471d4b07210bd1687ea8de9d911fbc3a3fc0270053aa9cdde1a5c9cdb133e",
+      "evaluation\\runner.py": "9a95998180bcb1e8b7c6b09c85476d166c1e48cba94323c8cda25df293e29e8f",
+      "evaluation\\synthetic.py": "2d24afd661278771d6202e0e414de79f12c2789d70776030b2901453eaac809b",
+      "ingestion\\__init__.py": "19f1dc169f3a73bd658c834829ada04de6125ccd7704c47ff0450a32b80b364e",
+      "ingestion\\audit.py": "557366407f03f8254b6d84be732f8f483224f32be54ef14d0dff4c88eb4cd833",
+      "ingestion\\loaders.py": "0680adf4ac0c46fa843381dc4315beedc4187df352deccab5d994e8621780bce",
+      "matching\\__init__.py": "7787af7047f7211831820102973fea3fd4d28ff529ae0e17b8468a6c4e3be1dc",
+      "matching\\baseline.py": "c70c6cd61fb0880cfe16846c5c277f90ec10b8d49269dfc665e8d738e2f88cf7",
+      "matching\\features.py": "d7c303c41747758ad5ea13b5b4c5fa75814165e677339f4bf4977da2e275d6cf",
+      "normalization\\__init__.py": "1bb45ff2a5e77f8c13aa9a3ba117b3c8a79a6b57a58c613d71195ef039650af5",
+      "retrieval\\__init__.py": "f78b3ca9a03f18a57e6e77301ba29fa16a68dc9d719618707945ac6cab54c82a",
+      "schema.py": "6d3e37ce5fdbc1c0f5bffa07cbe1493e9a5330f2528f856ab18fead667294572"
+    }
+  },
+  "report": {
+    "dataset_name": "wdc-products",
+    "dataset_version": "2022-12-22",
+    "identity_level": "benchmark_entity",
+    "split_audit": {
+      "note": "Text overlaps are warnings, not proof of shared identity. Near-duplicate audit pending.",
+      "overlaps": {
+        "train:test": {
+          "entities": 0,
+          "identical_normalized_title_brand_model": 0
+        },
+        "train:validation": {
+          "entities": 500,
+          "identical_normalized_title_brand_model": 0
+        },
+        "validation:test": {
+          "entities": 0,
+          "identical_normalized_title_brand_model": 0
+        }
+      },
+      "test_entity_disjoint_required": true
+    },
+    "splits": {
+      "test": {
+        "decisions": {
+          "reject": 2569,
+          "review": 1931
+        },
+        "error_breakdown": {
+          "false_negative": 500,
+          "false_negative:conflict:brand": 12
+        },
+        "pair_classification": {
+          "f1": 0.0,
+          "false_negatives": 500,
+          "false_positives": 0,
+          "pairs": 4500,
+          "precision": null,
+          "recall": 0.0,
+          "true_negatives": 4000,
+          "true_positives": 0
+        },
+        "probability_quality": {
+          "average_precision": 0.4623089122303421,
+          "brier_score": 0.079406074541179,
+          "probability_calibration": "none; reliability is measured, not assumed",
+          "reliability_bins": [
+            {
+              "count": 2569,
+              "lower": 0.0,
+              "mean_probability": 0.0495831803928036,
+              "positive_fraction": 0.02024133904242896,
+              "upper": 0.1
+            },
+            {
+              "count": 958,
+              "lower": 0.1,
+              "mean_probability": 0.14034120067670958,
+              "positive_fraction": 0.08559498956158663,
+              "upper": 0.2
+            },
+            {
+              "count": 321,
+              "lower": 0.2,
+              "mean_probability": 0.242474876508401,
+              "positive_fraction": 0.23052959501557632,
+              "upper": 0.3
+            },
+            {
+              "count": 172,
+              "lower": 0.3,
+              "mean_probability": 0.34457461251306676,
+              "positive_fraction": 0.32558139534883723,
+              "upper": 0.4
+            },
+            {
+              "count": 125,
+              "lower": 0.4,
+              "mean_probability": 0.44916299307746715,
+              "positive_fraction": 0.408,
+              "upper": 0.5
+            },
+            {
+              "count": 84,
+              "lower": 0.5,
+              "mean_probability": 0.5537410496130452,
+              "positive_fraction": 0.4880952380952381,
+              "upper": 0.6
+            },
+            {
+              "count": 85,
+              "lower": 0.6,
+              "mean_probability": 0.6467946136091302,
+              "positive_fraction": 0.4588235294117647,
+              "upper": 0.7
+            },
+            {
+              "count": 79,
+              "lower": 0.7,
+              "mean_probability": 0.7538192823777695,
+              "positive_fraction": 0.46835443037974683,
+              "upper": 0.8
+            },
+            {
+              "count": 81,
+              "lower": 0.8,
+              "mean_probability": 0.8487562409524044,
+              "positive_fraction": 0.6172839506172839,
+              "upper": 0.9
+            },
+            {
+              "count": 26,
+              "lower": 0.9,
+              "mean_probability": 0.9203342516511538,
+              "positive_fraction": 0.6923076923076923,
+              "upper": 1.0
+            }
+          ]
+        },
+        "profile": {
+          "listings": 1000,
+          "missing": {
+            "brand": 673,
+            "category": 1000,
+            "currency": 78,
+            "gtin": 1000,
+            "model": 1000,
+            "title": 0
+          },
+          "normalization_issues": {
+            "unparsed_price": 27
+          },
+          "sources": {
+            "wdc-products": 1000
+          }
+        },
+        "retrieval": {
+          "channel_hits": {
+            "tfidf": 50000
+          },
+          "direction": "directed; each gold pair contributes two queries",
+          "entity_positive_directions": 1000,
+          "entity_recall_at_k": {
+            "10": 0.927,
+            "20": 0.976,
+            "50": 0.994
+          },
+          "index_build_seconds": 0.04411230000550859,
+          "labeled_pair_recall_at_k": {
+            "10": 0.927,
+            "20": 0.976,
+            "50": 0.994
+          },
+          "labeled_positive_directions": 1000,
+          "memory_note": "Sparse matrix storage only, not peak process or full index memory.",
+          "population": "all unique listings in the evaluated split, including both pair sides",
+          "queries": 1000,
+          "query_latency_ms": {
+            "p50": 5.961700007901527,
+            "p95": 7.967270011431538
+          },
+          "self_matches_excluded": true,
+          "sparse_matrix_bytes": 929204,
+          "vocabulary_fit": "training only"
+        },
+        "retrieval_plus_matching_on_labeled_pairs": {
+          "f1": 0.0,
+          "false_negatives": 500,
+          "false_positives": 0,
+          "k": 20,
+          "note": "Either retrieval direction qualifies. Unlabeled candidates are not scored as negatives; this is not full-catalog precision.",
+          "pairs": 4500,
+          "precision": null,
+          "recall": 0.0,
+          "true_negatives": 4000,
+          "true_positives": 0
+        },
+        "scoring_seconds": 0.29285980001441203
+      },
+      "validation": {
+        "decisions": {
+          "reject": 1294,
+          "review": 1206
+        },
+        "error_breakdown": {
+          "false_negative": 500,
+          "false_negative:conflict:brand": 7
+        },
+        "pair_classification": {
+          "f1": 0.0,
+          "false_negatives": 500,
+          "false_positives": 0,
+          "pairs": 2500,
+          "precision": null,
+          "recall": 0.0,
+          "true_negatives": 2000,
+          "true_positives": 0
+        },
+        "probability_quality": {
+          "average_precision": 0.538988436088595,
+          "brier_score": 0.12334411181834921,
+          "probability_calibration": "none; reliability is measured, not assumed",
+          "reliability_bins": [
+            {
+              "count": 1294,
+              "lower": 0.0,
+              "mean_probability": 0.049618516450027586,
+              "positive_fraction": 0.04482225656877898,
+              "upper": 0.1
+            },
+            {
+              "count": 522,
+              "lower": 0.1,
+              "mean_probability": 0.13952158349602017,
+              "positive_fraction": 0.18199233716475097,
+              "upper": 0.2
+            },
+            {
+              "count": 207,
+              "lower": 0.2,
+              "mean_probability": 0.24620757392997683,
+              "positive_fraction": 0.40096618357487923,
+              "upper": 0.3
+            },
+            {
+              "count": 129,
+              "lower": 0.3,
+              "mean_probability": 0.34474376364547193,
+              "positive_fraction": 0.5193798449612403,
+              "upper": 0.4
+            },
+            {
+              "count": 84,
+              "lower": 0.4,
+              "mean_probability": 0.45439026130170485,
+              "positive_fraction": 0.4166666666666667,
+              "upper": 0.5
+            },
+            {
+              "count": 75,
+              "lower": 0.5,
+              "mean_probability": 0.5528830856900083,
+              "positive_fraction": 0.5866666666666667,
+              "upper": 0.6
+            },
+            {
+              "count": 68,
+              "lower": 0.6,
+              "mean_probability": 0.6517801646714864,
+              "positive_fraction": 0.6470588235294118,
+              "upper": 0.7
+            },
+            {
+              "count": 68,
+              "lower": 0.7,
+              "mean_probability": 0.7466091132621953,
+              "positive_fraction": 0.5441176470588235,
+              "upper": 0.8
+            },
+            {
+              "count": 49,
+              "lower": 0.8,
+              "mean_probability": 0.8409555869853796,
+              "positive_fraction": 0.673469387755102,
+              "upper": 0.9
+            },
+            {
+              "count": 4,
+              "lower": 0.9,
+              "mean_probability": 0.9163363073459392,
+              "positive_fraction": 1.0,
+              "upper": 1.0
+            }
+          ]
+        },
+        "profile": {
+          "listings": 1000,
+          "missing": {
+            "brand": 646,
+            "category": 1000,
+            "currency": 92,
+            "gtin": 1000,
+            "model": 1000,
+            "title": 0
+          },
+          "normalization_issues": {
+            "unparsed_price": 36
+          },
+          "sources": {
+            "wdc-products": 1000
+          }
+        },
+        "retrieval": {
+          "channel_hits": {
+            "tfidf": 50000
+          },
+          "direction": "directed; each gold pair contributes two queries",
+          "entity_positive_directions": 1000,
+          "entity_recall_at_k": {
+            "10": 0.929,
+            "20": 0.972,
+            "50": 0.994
+          },
+          "index_build_seconds": 0.04296940000494942,
+          "labeled_pair_recall_at_k": {
+            "10": 0.929,
+            "20": 0.972,
+            "50": 0.994
+          },
+          "labeled_positive_directions": 1000,
+          "memory_note": "Sparse matrix storage only, not peak process or full index memory.",
+          "population": "all unique listings in the evaluated split, including both pair sides",
+          "queries": 1000,
+          "query_latency_ms": {
+            "p50": 6.180750002386048,
+            "p95": 8.202214991615618
+          },
+          "self_matches_excluded": true,
+          "sparse_matrix_bytes": 1225856,
+          "vocabulary_fit": "training only"
+        },
+        "retrieval_plus_matching_on_labeled_pairs": {
+          "f1": 0.0,
+          "false_negatives": 500,
+          "false_positives": 0,
+          "k": 20,
+          "note": "Either retrieval direction qualifies. Unlabeled candidates are not scored as negatives; this is not full-catalog precision.",
+          "pairs": 2500,
+          "precision": null,
+          "recall": 0.0,
+          "true_negatives": 2000,
+          "true_positives": 0
+        },
+        "scoring_seconds": 0.13380860001780093
+      }
+    },
+    "synthetic": false,
+    "threshold_selection": {
+      "minimum_matches": 5,
+      "predicted_matches": 0,
+      "target_precision": 0.99,
+      "threshold": null,
+      "validation_precision": null,
+      "validation_recall": 0.0
+    },
+    "training_profile": {
+      "listings": 1000,
+      "missing": {
+        "brand": 638,
+        "category": 1000,
+        "currency": 94,
+        "gtin": 1000,
+        "model": 1000,
+        "title": 0
+      },
+      "normalization_issues": {
+        "unparsed_price": 34
+      },
+      "sources": {
+        "wdc-products": 1000
+      }
+    },
+    "training_seconds": 0.15320619998965412,
+    "vocabulary_fit_seconds": 0.0877473000145983,
+    "warning": "Official binary entity labels; no family/variant accuracy claim."
+  },
+  "source_url": "https://data.dws.informatik.uni-mannheim.de/largescaleproductcorpus/data/wdc-products/80pair.zip"
+}
