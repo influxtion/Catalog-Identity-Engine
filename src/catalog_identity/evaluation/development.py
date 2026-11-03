@@ -39,7 +39,11 @@ def validation_partitions(split: BenchmarkSplit, seed: int = 42):
 
 
 def develop(
-    config: RunConfig, output: Path, learners=("logistic", "lightgbm"), negative_policy="all"
+    config: RunConfig,
+    output: Path,
+    learners=("logistic", "lightgbm"),
+    negative_policy="all",
+    feature_version="2",
 ) -> dict:
     if output.exists():
         raise ValueError("output already exists")
@@ -62,6 +66,7 @@ def develop(
     output.mkdir(parents=True)
     report = {
         "phase": "validation_only",
+        "feature_version": feature_version,
         "test_opened": False,
         "synthetic": config.synthetic,
         "partition_seed": config.seed,
@@ -88,7 +93,9 @@ def develop(
     policy_weights = np.where(y == 1, 1.0, 2.0)
     calibration_weights = np.array([1.0 if p.label else 2.0 for p in calibration.pairs])
     for learner in learners:
-        model = LearnedMatcher(learner=learner, seed=config.seed).fit(train)
+        model = LearnedMatcher(
+            learner=learner, seed=config.seed, feature_version=feature_version
+        ).fit(train)
         raw = model.predict(policy, calibrated=False)
         model.calibrate(calibration, calibration_weights)
         p = model.predict(policy)

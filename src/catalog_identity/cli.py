@@ -22,6 +22,13 @@ def main(argv: list[str] | None = None) -> int:
     development.add_argument("--config", type=Path, required=True)
     development.add_argument("--output", type=Path, required=True)
     development.add_argument("--negative-policy", choices=["all", "random_only"], default="all")
+    development.add_argument("--feature-version", choices=["2", "3"], default="2")
+    diagnostics = commands.add_parser(
+        "validation-errors", help="Inspect saved matcher validation errors"
+    )
+    diagnostics.add_argument("--config", type=Path, required=True)
+    diagnostics.add_argument("--model", type=Path, required=True)
+    diagnostics.add_argument("--output", type=Path, required=True)
     ablation = commands.add_parser("retrieval-ablation", help="Compare retrieval on validation")
     ablation.add_argument("--config", type=Path, required=True)
     ablation.add_argument("--output", type=Path, required=True)
@@ -58,6 +65,12 @@ def main(argv: list[str] | None = None) -> int:
     profiling.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command == "validation-errors":
+            from catalog_identity.evaluation.validation_errors import validation_errors
+
+            report = validation_errors(load_config(args.config), args.model, args.output)
+            print(json.dumps(report["classification"], indent=2))
+            return 0
         if args.command == "incremental-showcase":
             from catalog_identity.evaluation.incremental import incremental_showcase
 
@@ -138,7 +151,10 @@ def main(argv: list[str] | None = None) -> int:
             from catalog_identity.evaluation.development import develop
 
             report = develop(
-                load_config(args.config), args.output, negative_policy=args.negative_policy
+                load_config(args.config),
+                args.output,
+                negative_policy=args.negative_policy,
+                feature_version=args.feature_version,
             )
             print(
                 json.dumps(

@@ -62,6 +62,9 @@ def set_evidence(a: set[str], b: set[str]) -> tuple[float, float, float]:
 
 
 class TextFeatures:
+    names = ENRICHED_NAMES
+    version = ENRICHED_VERSION
+
     def __init__(self):
         self.vectorizers = {}
 
@@ -141,7 +144,9 @@ class TextFeatures:
     @classmethod
     def load(cls, path: Path):
         result = cls()
-        for field, data in json.loads(path.read_text(encoding="utf-8")).items():
+        saved = json.loads(path.read_text(encoding="utf-8"))
+        for field in ("title", "description"):
+            data = saved[field]
             vectorizer = None
             if data:
                 vectorizer = TfidfVectorizer(

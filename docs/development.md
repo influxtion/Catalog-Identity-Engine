@@ -17,6 +17,14 @@ executable pickle artifacts. Tests verify round-trip predictions.
 
 ## Calibration and operating thresholds
 
+`develop --feature-version 3` adds train-fitted word/bigram similarity and symmetric hints for
+quantities, form factors, editions, audio channels and specific model codes. One-sided hints
+remain distinct from explicit conflicts. These are experimental learned features, not hard
+benchmark label rules. Version 2 remains the default for reproduction and existing saved
+models remain loadable. `validation-errors --config ... --model ... --output ...` exports local
+pair evidence without opening test data; its full-validation summary is diagnostic, not an
+independent performance estimate.
+
 Validation entities are assigned to two deterministic hash buckets using seed 42. Only pairs
 whose endpoints occupy the same bucket are retained. One bucket calibrates a sigmoid on model
 logits; the other selects match/reject thresholds. The buckets have disjoint entities.

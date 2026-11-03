@@ -10,7 +10,6 @@ from sqlalchemy import delete, insert, or_, select, update
 from catalog_identity.clustering.engine import Edge, cluster, structured_edges
 from catalog_identity.clustering.policy import compare_identity
 from catalog_identity.clustering.registry import IdentityRegistry
-from catalog_identity.matching.enriched import ENRICHED_NAMES
 from catalog_identity.matching.features import pair_features
 from catalog_identity.normalization import normalize, normalize_text
 from catalog_identity.retrieval import CandidateIndex
@@ -228,7 +227,7 @@ class Catalog:
             x = self.model.features.transform(
                 {left: listings[left], right: listings[right]}, [(left, right)]
             )
-            features = dict(zip(ENRICHED_NAMES, x[0].tolist(), strict=True))
+            features = dict(zip(self.model.features.names, x[0].tolist(), strict=True))
             probability = float(self.model.score_features(x)[0])
             match, reject = self.policy["match"]["threshold"], self.policy["reject_threshold"]
             model_decision = (

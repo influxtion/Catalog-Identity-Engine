@@ -23,6 +23,12 @@ def test_validation_development_never_needs_test_file(tmp_path):
     assert model["raw_probability_quality"]["probability_calibration"].startswith("none;")
     assert model["calibrated_probability_quality"]["probability_calibration"].startswith("sigmoid;")
     assert (tmp_path / "run/logistic/policy.json").exists()
+    from catalog_identity.evaluation.validation_errors import validation_errors
+
+    diagnostic = validation_errors(config, tmp_path / "run/logistic", tmp_path / "diagnostics")
+    assert not diagnostic["test_opened"]
+    assert diagnostic["classification"]["pairs"] > result["policy_pairs"]
+    assert (tmp_path / "diagnostics/validation-pairs.jsonl").exists()
 
 
 def test_weighted_policy_accounts_for_excluded_negatives():

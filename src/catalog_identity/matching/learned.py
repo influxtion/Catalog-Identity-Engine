@@ -9,7 +9,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from catalog_identity.ingestion.loaders import BenchmarkSplit
-from catalog_identity.matching.enriched import ENRICHED_NAMES, ENRICHED_VERSION, TextFeatures
+from catalog_identity.matching.distinctions import DistinctionFeatures
+from catalog_identity.matching.enriched import TextFeatures
 
 
 def logit(p):
@@ -22,13 +23,21 @@ def sigmoid(x):
 
 
 class LearnedMatcher:
-    def __init__(self, learner="lightgbm", seed=42, num_leaves=15, n_estimators=200):
+    def __init__(
+        self, learner="lightgbm", seed=42, num_leaves=15, n_estimators=200, feature_version="2"
+    ):
         if learner not in ("logistic", "lightgbm"):
             raise ValueError("unknown learner")
+        if feature_version not in ("2", "3"):
+            raise ValueError("unsupported feature version")
         self.settings = dict(
-            learner=learner, seed=seed, num_leaves=num_leaves, n_estimators=n_estimators
+            learner=learner,
+            seed=seed,
+            num_leaves=num_leaves,
+            n_estimators=n_estimators,
+            feature_version=feature_version,
         )
-        self.features = TextFeatures()
+        self.features = TextFeatures() if feature_version == "2" else DistinctionFeatures()
         self.calibration = None
         self.parameters = None
 
@@ -52,7 +61,7 @@ class LearnedMatcher:
                 force_col_wise=True,
                 verbosity=-1,
             )
-            model.fit(x, y, feature_name=list(ENRICHED_NAMES))
+            model.fit(x, y, feature_name=list(self.features.names))
             self.booster = model.booster_
         else:
             model = make_pipeline(StandardScaler(), LogisticRegression(max_iter=2000))
@@ -106,8 +115,8 @@ class LearnedMatcher:
                     "settings": self.settings,
                     "calibration": self.calibration,
                     "parameters": self.parameters,
-                    "feature_version": ENRICHED_VERSION,
-                    "feature_names": list(ENRICHED_NAMES),
+                    "feature_version": self.features.version,
+                    "feature_names": list(self.features.names),
                 },
                 indent=2,
             ),
@@ -119,12 +128,13 @@ class LearnedMatcher:
     @classmethod
     def load(cls, directory: Path):
         data = json.loads((directory / "matcher.json").read_text(encoding="utf-8"))
-        if data["feature_version"] != ENRICHED_VERSION or data["feature_names"] != list(
-            ENRICHED_NAMES
+        settings = {"feature_version": data["feature_version"], **data["settings"]}
+        result = cls(**settings)
+        if data["feature_version"] != result.features.version or data["feature_names"] != list(
+            result.features.names
         ):
             raise ValueError("model feature implementation does not match saved model")
-        result = cls(**data["settings"])
-        result.features = TextFeatures.load(directory / "text-features.json")
+        result.features = type(result.features).load(directory / "text-features.json")
         result.calibration, result.parameters = data["calibration"], data["parameters"]
         if result.settings["learner"] == "lightgbm":
             import lightgbm as lgb
