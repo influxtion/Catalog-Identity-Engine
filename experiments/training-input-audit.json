@@ -1,0 +1,503 @@
+{
+  "complete": true,
+  "control_reproduction": {
+    "assessed_negatives": 3954,
+    "assessed_pairs": 12425,
+    "assessed_positives": 8471,
+    "fits": 3,
+    "folds": [
+      {
+        "assessment_entities": 197,
+        "assessment_pairs": 5558,
+        "boundary_pairs_excluded": 5419,
+        "classification": {
+          "f1": 0.1752988047808765,
+          "false_negatives": 3311,
+          "false_positives": 1,
+          "pairs": 5558,
+          "precision": 0.9971671388101983,
+          "recall": 0.0960960960960961,
+          "true_negatives": 1894,
+          "true_positives": 352
+        },
+        "fold": 0,
+        "saved_threshold": 0.9908183172836895,
+        "train_entities": 303,
+        "train_pairs": 8858,
+        "weighted_AP": 0.8929882070304628
+      },
+      {
+        "assessment_entities": 148,
+        "assessment_pairs": 3336,
+        "boundary_pairs_excluded": 4633,
+        "classification": {
+          "f1": 0.5090332805071316,
+          "false_negatives": 1547,
+          "false_positives": 2,
+          "pairs": 3336,
+          "precision": 0.9975155279503105,
+          "recall": 0.3417021276595745,
+          "true_negatives": 984,
+          "true_positives": 803
+        },
+        "fold": 1,
+        "saved_threshold": 0.945827436594324,
+        "train_entities": 352,
+        "train_pairs": 11866,
+        "weighted_AP": 0.9218333932214549
+      },
+      {
+        "assessment_entities": 155,
+        "assessment_pairs": 3531,
+        "boundary_pairs_excluded": 4768,
+        "classification": {
+          "f1": 0.39425587467362927,
+          "false_negatives": 1854,
+          "false_positives": 2,
+          "pairs": 3531,
+          "precision": 0.9966996699669967,
+          "recall": 0.24572823433685922,
+          "true_negatives": 1071,
+          "true_positives": 604
+        },
+        "fold": 2,
+        "saved_threshold": 0.9586458966863911,
+        "train_entities": 345,
+        "train_pairs": 11536,
+        "weighted_AP": 0.9187850784555561
+      }
+    ],
+    "settings": {
+      "feature_version": "3",
+      "learner": "lightgbm",
+      "n_estimators": 200,
+      "num_leaves": 15,
+      "seed": 42
+    },
+    "source_report_sha256": "02b34146d9609597700848c7279d80fa248fdbdf86d0a9bf2166daadf92c7a52",
+    "thresholds_reselected": false,
+    "unassessed_boundary_negatives": 7410,
+    "warning": "Reused development folds and saved within-fold selected thresholds. Not independent accuracy evidence. No pooled scores or new operating policy."
+  },
+  "dataset_name": "wdc-products",
+  "dataset_version": "2022-12-22",
+  "declared_hard_negative_pairs": 8523,
+  "entities": 500,
+  "entity_support": {
+    "entities_without_positive_pairs": 0,
+    "listing_count_quantiles": [
+      3.0,
+      5.0,
+      11.0,
+      11.0
+    ],
+    "positive_pair_count_quantiles": [
+      3.0,
+      10.0,
+      55.0,
+      55.0
+    ]
+  },
+  "identity_level": "benchmark_entity",
+  "implementation": {
+    "dependencies": {
+      "faiss-cpu": "1.15.1",
+      "lightgbm": "4.7.0",
+      "numpy": "2.5.4",
+      "scikit-learn": "1.9.1",
+      "sentence-transformers": "5.7.0",
+      "tokenizers": "0.23.3",
+      "torch": "2.15.0",
+      "transformers": "5.22.1"
+    },
+    "git": {
+      "commit": "26f0994b8f8256b48718533f05a9acca4d92ad87",
+      "working_tree_status": ""
+    },
+    "lock_sha256": "41a37954d39beb08711fc031712cfee2b76f3e5a260ca73663568eeb89fe755e",
+    "logical_cpus": 20,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+    "python": "3.12.10",
+    "source_sha256": {
+      "__init__.py": "bd940e7034c9701c400f8c858a9327eb82f81ba780d29faa2589e7769225e0c8",
+      "api/__init__.py": "114ef20aa83bb02f8aceb4fe54d05812137f6973b58fb41f09b6927d0b8f0062",
+      "api/app.py": "944f4d8c7a3917ea81a5cf13ac13750c2879d4c4e69e24cf41e0cc365543831e",
+      "cli.py": "26f2473ae7309d4c179853eb70ecf23fe7eb7cbe6c9fdfc3e4bd189acc6d38dc",
+      "clustering/__init__.py": "920770d5e9bc5b332593ad3c3c744685ef951f1e04cda6a8fa453f567bd7f9d1",
+      "clustering/engine.py": "ce917dbc90182bda0b5920ebb8ec747a1bf371fe90ac889cd234b1d996f22e67",
+      "clustering/policy.py": "7131d7c5d2d8981070efb9e33f778db2da83e966a8bcce4464a8f8c85b8f6a1b",
+      "clustering/registry.py": "4fee5194f0a72ea4507c5d842e11dfaf00483249614f2afa5e6d93a06a9ad866",
+      "evaluation/__init__.py": "485db8519fd089d9a8a13171c30ce18b59865f851434e3d063b5f50dad668d26",
+      "evaluation/cluster_showcase.py": "b6a6b0d51251d82ddb11bf73bc01dd10b463fab0bc13698c9dc5e71f06c585b6",
+      "evaluation/clusters.py": "e9cbd6cfc4e83fe7561be7623c953732dd96be2caecda6b13d0f599225084438",
+      "evaluation/config.py": "477994b0f3755a26be5ee3013b6a055553a640849555d65b100bfca5c60068c5",
+      "evaluation/cross_encoder.py": "91909f9e4ac5f9a4ee45bcbcdde70d25a554e86c6aa6bcd4a60ff6673dd961df",
+      "evaluation/development.py": "2d50caaef3c58c2a733da7a2aa29ce1908ad7713bca4c695fd090d82ea067f4a",
+      "evaluation/frozen.py": "d89c8866e988b71fe879a76ff6aca6c17ca4bbe19bfdb35753635a5f77171e4e",
+      "evaluation/full_encoder.py": "f2c8f8c3539183868765d82b16f607183afdf1744d6ea29ab9b0d57267c07506",
+      "evaluation/incremental.py": "ae4f44765bfa58b367028e5b84c4737468bf3163ecbc475bac3a03c1d92ee416",
+      "evaluation/metrics.py": "4153e712d8e8bb4f6891db35974b062c92005546bb951c89cb84c4695cc4a283",
+      "evaluation/provenance.py": "c92034024ac53b493ef2085d1982684e19687592b1433908f1940b70803d7fa8",
+      "evaluation/retrieval_ablation.py": "d3efb115bb7b85f2e0b47ef2bce7afc0faf067afabdc95cc22f53e9d2a85fd10",
+      "evaluation/runner.py": "9a95998180bcb1e8b7c6b09c85476d166c1e48cba94323c8cda25df293e29e8f",
+      "evaluation/scaling.py": "53218f04372e50caac5f180fc63a90587db4fd68c4b6d825104bf1ab7995f8e4",
+      "evaluation/screening.py": "0c357d548964ee91d8470047de9458aab9127b24471d39a0715ec9f61aaddfd0",
+      "evaluation/semantic_screening.py": "87846e724c416ea04dea3be9a3ab4f1f2b897a2b83416d92ae7d3856d1ad83ea",
+      "evaluation/synthetic.py": "2d24afd661278771d6202e0e414de79f12c2789d70776030b2901453eaac809b",
+      "evaluation/training_audit.py": "d4426f8b8a3cdd16811579500e1cea808a2ebb42fac03a362b8db0301489e3e1",
+      "evaluation/training_review.py": "c939e5243f5da5bf00c92906f509f278b27da41eb20efe0aaf502ca55cd7be4e",
+      "evaluation/validation_errors.py": "499610b19954cdb2098403e9c51c0588c3da8f69357ebe1c8ee20d98e8913b5d",
+      "ingestion/__init__.py": "19f1dc169f3a73bd658c834829ada04de6125ccd7704c47ff0450a32b80b364e",
+      "ingestion/audit.py": "ee56d0506d469188e95a64485751bd9bbcc3f09eee9613a7b77524ef47fe8675",
+      "ingestion/loaders.py": "0680adf4ac0c46fa843381dc4315beedc4187df352deccab5d994e8621780bce",
+      "matching/__init__.py": "7787af7047f7211831820102973fea3fd4d28ff529ae0e17b8468a6c4e3be1dc",
+      "matching/alignment.py": "5bb52d89028ec60d869fe9732bc19ca96e11d6b55b75036e1a27162cda13ee52",
+      "matching/baseline.py": "f4d257ac4bc3a6b0c294f5bbc07a5c6f619b162c13644ec1357b32a6d2897dbb",
+      "matching/cross_encoder.py": "88926d1f04924dccdb5c2dd118aa177c7f183ad06c18d93f68f6beae06d4c00f",
+      "matching/distinctions.py": "305db68aac50a0d0ce9b0f98d3312493e8931b333bba4419469fd2c7477682b0",
+      "matching/enriched.py": "939631baf9ba85f37b88dfdb5c896a69a03dcdf5479d0691d9bb08ba9f021b84",
+      "matching/execution.py": "56bdd16717032cdc2e69b9a8a71facf2bf5ae3c265473b338996fd14197757a8",
+      "matching/features.py": "d7c303c41747758ad5ea13b5b4c5fa75814165e677339f4bf4977da2e275d6cf",
+      "matching/full_encoder.py": "a53cc0c00c364dd2b1ccda62d68b71591165b8b33eeff13c7aba80052415a0c2",
+      "matching/learned.py": "f7b47838ebe88bbb1ffbb97189523cc05207e3ab35f48545a9ae5527a36647bf",
+      "matching/semantic_features.py": "b388bb1518305476d1e387e4b599d7cda982044eac9def6d3a03c9b965785c71",
+      "normalization/__init__.py": "1bb45ff2a5e77f8c13aa9a3ba117b3c8a79a6b57a58c613d71195ef039650af5",
+      "retrieval/__init__.py": "58145554231347ba766157936355da66c80f6c5263a61b9665902e7fb3457297",
+      "retrieval/semantic.py": "218a691103bc7e06f8e3708fc0e21182d82163c4a55ebeb61ed44d1f005ed241",
+      "schema.py": "6d3e37ce5fdbc1c0f5bffa07cbe1493e9a5330f2528f856ab18fead667294572",
+      "showcase.py": "c4a3f0f8aa17be344db88cc1b83dbb10b0151b1c0a8e0a6b44fc38fbc3b8dfcc",
+      "storage/__init__.py": "444f922d8c370ed760f9744ade0a18beb224004430e7b58b62aaa0be6bc51875",
+      "storage/catalog.py": "4c3aca4bbd8947cdc043798a6d06e262a31b5387365b6230461ef0105603a920",
+      "storage/database.py": "eb2375c0e420f164497f12f35631512ad5bb53a13838532cf43c5cc9bb69a6b9",
+      "storage/normalized.py": "67b54c9e3872b13baa4b33c2249ac85acfadb52153fdeed50a25b61d75cadbad",
+      "storage/worker.py": "c65eccbcbb386a39420c1a3b719212fcc2837736bab326b8fd9466d60481c79d"
+    }
+  },
+  "inputs": {
+    "train": "53148f25fb0a4796801f30554a09ac258e7ae72a022ad668647bbc99375554c5"
+  },
+  "interpretation": "Hints and collisions are review signals, not corrected labels. Collision bounds apply only to these observed inputs and their stated representation. Raw-field presence does not establish trustworthy identifiers or annotation quality.",
+  "listing_collisions": {
+    "normalized_text": {
+      "cross_entity_groups": 0,
+      "entities_in_cross_entity_groups": 0,
+      "listings_in_cross_entity_groups": 0,
+      "unique_listing_inputs": 2841
+    },
+    "normalized_title": {
+      "cross_entity_groups": 0,
+      "entities_in_cross_entity_groups": 0,
+      "listings_in_cross_entity_groups": 0,
+      "unique_listing_inputs": 2841
+    },
+    "raw_text": {
+      "cross_entity_groups": 0,
+      "entities_in_cross_entity_groups": 0,
+      "listings_in_cross_entity_groups": 0,
+      "unique_listing_inputs": 2841
+    }
+  },
+  "listings": 2841,
+  "negatives": 11364,
+  "nonempty_listing_fields": {
+    "attributes": 0,
+    "brand": 1011,
+    "category": 0,
+    "currency": 2544,
+    "description": 2139,
+    "gtin": 0,
+    "model": 0,
+    "price": 2636,
+    "title": 2841
+  },
+  "nonempty_source_fields": {
+    "brand": 1011,
+    "description": 2139,
+    "id": 2841,
+    "price": 2636,
+    "priceCurrency": 2544,
+    "title": 2841
+  },
+  "pair_collisions": {
+    "normalized_text": {
+      "affected_negatives": 0,
+      "affected_pairs": 0,
+      "affected_positives": 0,
+      "minimum_observed_errors": 0,
+      "mixed_label_groups": 0,
+      "pairs_beyond_first_input_occurrence": 0,
+      "repeated_input_groups": 0,
+      "unique_pair_inputs": 19835
+    },
+    "normalized_title": {
+      "affected_negatives": 0,
+      "affected_pairs": 0,
+      "affected_positives": 0,
+      "minimum_observed_errors": 0,
+      "mixed_label_groups": 0,
+      "pairs_beyond_first_input_occurrence": 0,
+      "repeated_input_groups": 0,
+      "unique_pair_inputs": 19835
+    },
+    "pair_tokens_256": {
+      "affected_negatives": 0,
+      "affected_pairs": 0,
+      "affected_positives": 0,
+      "minimum_observed_errors": 0,
+      "mixed_label_groups": 0,
+      "pairs_beyond_first_input_occurrence": 0,
+      "repeated_input_groups": 0,
+      "unique_pair_inputs": 19835
+    },
+    "raw_text": {
+      "affected_negatives": 0,
+      "affected_pairs": 0,
+      "affected_positives": 0,
+      "minimum_observed_errors": 0,
+      "mixed_label_groups": 0,
+      "pairs_beyond_first_input_occurrence": 0,
+      "repeated_input_groups": 0,
+      "unique_pair_inputs": 19835
+    },
+    "untruncated_tokens": {
+      "affected_negatives": 0,
+      "affected_pairs": 0,
+      "affected_positives": 0,
+      "minimum_observed_errors": 0,
+      "mixed_label_groups": 0,
+      "pairs_beyond_first_input_occurrence": 0,
+      "repeated_input_groups": 0,
+      "unique_pair_inputs": 19835
+    }
+  },
+  "pairs": 19835,
+  "positives": 8471,
+  "review_sampling": {
+    "distinct_entities": 140,
+    "entity_cap": 2,
+    "maximum_selected_pairs_per_entity": 2,
+    "priority_order": [
+      "conflicting_text_inputs",
+      "conflicting_token_inputs",
+      "control_false_positive",
+      "control_false_negative",
+      "high_overlap_negative",
+      "low_overlap_positive",
+      "code_disagreement_positive",
+      "missing_description_positive",
+      "truncated_positive",
+      "reference"
+    ],
+    "quota_per_stratum": 20,
+    "seed": 42,
+    "selected_pairs": 145,
+    "strata": {
+      "code_disagreement_positive": {
+        "eligible_pairs": 904,
+        "quota_shortfall": 0,
+        "selected_as_primary": 20
+      },
+      "conflicting_text_inputs": {
+        "eligible_pairs": 0,
+        "quota_shortfall": 20,
+        "selected_as_primary": 0
+      },
+      "conflicting_token_inputs": {
+        "eligible_pairs": 0,
+        "quota_shortfall": 20,
+        "selected_as_primary": 0
+      },
+      "control_false_negative": {
+        "eligible_pairs": 6712,
+        "quota_shortfall": 0,
+        "selected_as_primary": 20
+      },
+      "control_false_positive": {
+        "eligible_pairs": 5,
+        "quota_shortfall": 15,
+        "selected_as_primary": 5
+      },
+      "high_overlap_negative": {
+        "eligible_pairs": 74,
+        "quota_shortfall": 0,
+        "selected_as_primary": 20
+      },
+      "low_overlap_positive": {
+        "eligible_pairs": 1373,
+        "quota_shortfall": 0,
+        "selected_as_primary": 20
+      },
+      "missing_description_positive": {
+        "eligible_pairs": 3722,
+        "quota_shortfall": 0,
+        "selected_as_primary": 20
+      },
+      "reference": {
+        "eligible_pairs": 19835,
+        "quota_shortfall": 0,
+        "selected_as_primary": 20
+      },
+      "truncated_positive": {
+        "eligible_pairs": 2470,
+        "quota_shortfall": 0,
+        "selected_as_primary": 20
+      }
+    },
+    "warning": "Targeted overlapping strata; greedy priority and global entity cap. Reference drawn from remaining eligible pairs. Not a prevalence or performance sample. Keep the key away from independent reviewers; labels remain unchanged."
+  },
+  "schema_version": "training-input-audit-v1",
+  "seed": 42,
+  "strata": {
+    "code_disagreement_positive": {
+      "control_assessed_pairs": 904,
+      "control_counts": {
+        "fn": 903,
+        "fp": 0,
+        "tn": 0,
+        "tp": 1
+      },
+      "entities": 148,
+      "pairs": 904,
+      "positives": 904
+    },
+    "conflicting_text_inputs": {
+      "control_assessed_pairs": 0,
+      "control_counts": {
+        "fn": 0,
+        "fp": 0,
+        "tn": 0,
+        "tp": 0
+      },
+      "entities": 0,
+      "pairs": 0,
+      "positives": 0
+    },
+    "conflicting_token_inputs": {
+      "control_assessed_pairs": 0,
+      "control_counts": {
+        "fn": 0,
+        "fp": 0,
+        "tn": 0,
+        "tp": 0
+      },
+      "entities": 0,
+      "pairs": 0,
+      "positives": 0
+    },
+    "control_false_negative": {
+      "control_assessed_pairs": 6712,
+      "control_counts": {
+        "fn": 6712,
+        "fp": 0,
+        "tn": 0,
+        "tp": 0
+      },
+      "entities": 478,
+      "pairs": 6712,
+      "positives": 6712
+    },
+    "control_false_positive": {
+      "control_assessed_pairs": 5,
+      "control_counts": {
+        "fn": 0,
+        "fp": 5,
+        "tn": 0,
+        "tp": 0
+      },
+      "entities": 10,
+      "pairs": 5,
+      "positives": 0
+    },
+    "high_overlap_negative": {
+      "control_assessed_pairs": 30,
+      "control_counts": {
+        "fn": 0,
+        "fp": 1,
+        "tn": 29,
+        "tp": 0
+      },
+      "entities": 77,
+      "pairs": 74,
+      "positives": 0
+    },
+    "low_overlap_positive": {
+      "control_assessed_pairs": 1373,
+      "control_counts": {
+        "fn": 1214,
+        "fp": 0,
+        "tn": 0,
+        "tp": 159
+      },
+      "entities": 223,
+      "pairs": 1373,
+      "positives": 1373
+    },
+    "missing_description_positive": {
+      "control_assessed_pairs": 3722,
+      "control_counts": {
+        "fn": 2990,
+        "fp": 0,
+        "tn": 0,
+        "tp": 732
+      },
+      "entities": 340,
+      "pairs": 3722,
+      "positives": 3722
+    },
+    "reference": {
+      "control_assessed_pairs": 12425,
+      "control_counts": {
+        "fn": 6712,
+        "fp": 5,
+        "tn": 3949,
+        "tp": 1759
+      },
+      "entities": 500,
+      "pairs": 19835,
+      "positives": 8471
+    },
+    "truncated_positive": {
+      "control_assessed_pairs": 2470,
+      "control_counts": {
+        "fn": 1966,
+        "fp": 0,
+        "tn": 0,
+        "tp": 504
+      },
+      "entities": 312,
+      "pairs": 2470,
+      "positives": 2470
+    }
+  },
+  "synthetic": false,
+  "test_opened": false,
+  "text_collision_pairs_resolved_by_brand_description": 0,
+  "token_audit": {
+    "new_mixed_pairs_after_budget": 0,
+    "new_mixed_pairs_after_tokenization": 0,
+    "pairs_with_truncation_by_label": {
+      "0": {
+        "any": 3322,
+        "brand": 40,
+        "description": 3289
+      },
+      "1": {
+        "any": 2470,
+        "brand": 51,
+        "description": 2432
+      }
+    }
+  },
+  "tokenizer": {
+    "files_sha256": {
+      "config.json": "953f9c0d463486b10a6871cc2fd59f223b2c70184f49815e7efbcab5d8908b41",
+      "special_tokens_map.json": "303df45a03609e4ead04bc3dc1536d0ab19b5358db685b6f3da123d05ec200e3",
+      "tokenizer.json": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+      "tokenizer_config.json": "acb92769e8195aabd29b7b2137a9e6d6e25c476a4f15aa4355c233426c61576b",
+      "vocab.txt": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+    },
+    "snapshot": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
+  },
+  "validation_opened": false
+}

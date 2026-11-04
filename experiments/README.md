@@ -1,5 +1,13 @@
 # Measured experiments
 
+## Training input audit
+
+[Findings and the next data experiment](training-data-findings.md) report the completed
+training-only audit and [machine-readable evidence](training-input-audit.json). The existing
+control was reproduced at its saved thresholds; validation/test files stayed untouched.
+No new candidate or label correction was introduced. Local blinded review packets contain
+145 cases and are deliberately excluded from git.
+
 ## Final conventional comparison: existing control retained
 
 The [complete three-fold result](full-encoder-screening.json) and
