@@ -120,8 +120,32 @@ def main(argv: list[str] | None = None) -> int:
         "profile", help="Validate and profile canonical CSV/JSONL listings"
     )
     profiling.add_argument("input", type=Path)
+    annotation_import = commands.add_parser(
+        "annotation-import", help="Import a blind packet and assign independent reviewers"
+    )
+    annotation_import.add_argument("--packet", type=Path, required=True)
+    annotation_import.add_argument("--audit-report", type=Path)
+    annotation_import.add_argument("--name", default="Training evidence review")
+    annotation_import.add_argument("--reviewers", nargs=2, required=True)
+    annotation_import.add_argument("--adjudicator", required=True)
+    annotation_import.add_argument("--output", type=Path, required=True)
+    annotation_export = commands.add_parser(
+        "annotation-export", help="Export locked annotations and progress"
+    )
+    annotation_export.add_argument("--batch", required=True)
+    annotation_export.add_argument("--output", type=Path, required=True)
+    annotation_rotate = commands.add_parser(
+        "annotation-rotate", help="Replace one reviewer access key"
+    )
+    annotation_rotate.add_argument("--batch", required=True)
+    annotation_rotate.add_argument("--reviewer", required=True)
+    annotation_rotate.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
+        if args.command.startswith("annotation-"):
+            from catalog_identity.annotations.commands import execute
+
+            return execute(args)
         if args.command == "audit-training":
             from catalog_identity.evaluation.training_audit import run_audit
 

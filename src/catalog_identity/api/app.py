@@ -46,11 +46,16 @@ def create_app(database_url=None, model_directory=None):
     catalog = Catalog(database, Path(configured_model) if configured_model else None)
     app = FastAPI(title="Catalog Identity Engine", version="0.2.0")
     app.state.catalog = catalog
+    from catalog_identity.annotations.api import annotation_router
+    from catalog_identity.annotations.store import AnnotationStore
+
+    app.state.annotations = AnnotationStore(database)
+    app.include_router(annotation_router(app.state.annotations))
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
         allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type"],
+        allow_headers=["Content-Type", "Authorization"],
     )
 
     def call(function, *args, **kwargs):
