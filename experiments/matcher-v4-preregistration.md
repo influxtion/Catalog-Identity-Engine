@@ -21,6 +21,8 @@ Assessment positives have weight 1 and negatives weight 3: across three folds,
 same-entity positives are retained once and different-entity negatives have
 expected retention 1/3. These weights estimate the original training-pair mixture;
 they do not make this a random sample of all possible product pairs.
+Restricting fit pairs also changes training class balance; screening estimates
+generalization within the training source, not a target-domain guarantee.
 
 Report each fold's average precision and maximum weighted recall at empirical
 precision .95, .98, and .99, with raw and weighted counts, distinct positive

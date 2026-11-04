@@ -10,13 +10,14 @@ from catalog_identity.evaluation.config import RunConfig
 from catalog_identity.evaluation.metrics import classification_metrics, probability_metrics
 from catalog_identity.evaluation.provenance import implementation_manifest
 from catalog_identity.evaluation.runner import file_hash, write_json
+from catalog_identity.ingestion.audit import development_overlap
 from catalog_identity.ingestion.loaders import BenchmarkSplit, load_wdc_pairs
 from catalog_identity.matching.baseline import select_match_threshold
 from catalog_identity.matching.learned import LearnedMatcher
 
 
 def validation_partitions(split: BenchmarkSplit, seed: int = 42):
-    if split.name != "validation" or len(split.entity_ids) != len(split.listings):
+    if split.name != "validation" or set(split.entity_ids) != set(split.listings):
         raise ValueError("complete validation entity metadata is required")
     buckets = {
         key: int(hashlib.sha256(f"{seed}:{entity}".encode()).hexdigest(), 16) % 2
@@ -44,6 +45,8 @@ def develop(
     learners=("logistic", "lightgbm"),
     negative_policy="all",
     feature_version="2",
+    num_leaves=15,
+    n_estimators=200,
 ) -> dict:
     if output.exists():
         raise ValueError("output already exists")
@@ -60,12 +63,13 @@ def develop(
             train.identity_level,
         )
     validation = load_wdc_pairs(config.validation, "validation")
-    if train.listings.keys() & validation.listings.keys():
-        raise ValueError("train/validation listing leakage")
+    overlap = development_overlap(train, validation)
     calibration, policy = validation_partitions(validation, config.seed)
     output.mkdir(parents=True)
     report = {
         "phase": "validation_only",
+        "development_only": True,
+        "development_overlap": overlap,
         "feature_version": feature_version,
         "test_opened": False,
         "synthetic": config.synthetic,
@@ -94,7 +98,11 @@ def develop(
     calibration_weights = np.array([1.0 if p.label else 2.0 for p in calibration.pairs])
     for learner in learners:
         model = LearnedMatcher(
-            learner=learner, seed=config.seed, feature_version=feature_version
+            learner=learner,
+            seed=config.seed,
+            feature_version=feature_version,
+            num_leaves=num_leaves,
+            n_estimators=n_estimators,
         ).fit(train)
         raw = model.predict(policy, calibrated=False)
         model.calibrate(calibration, calibration_weights)
@@ -125,9 +133,21 @@ def develop(
             "synthetic": config.synthetic,
             "identity_level": "benchmark_entity",
             "training_selection": report["training_selection"],
+            "development_overlap": overlap,
+            "development_only": True,
         }
         write_json(model_path / "policy.json", policy_record)
         metrics = {
+            "settings": model.settings,
+            "threshold_selected_on_reported_population": True,
+            "precision_status": "empirical; not an established precision guarantee",
+            "distinct_matched_positive_entities": len(
+                {
+                    policy.entity_ids[pair.left]
+                    for i, pair in enumerate(policy.pairs)
+                    if prediction[i] and pair.label
+                }
+            ),
             "match_policy": asdict(selection),
             "reject_threshold": reject_threshold,
             "classification": classification_metrics(y, prediction),

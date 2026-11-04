@@ -70,6 +70,10 @@ def validation_errors(config, model_directory: Path, output: Path):
         )
     report = {
         "phase": "validation_diagnostics",
+        "development_only": True,
+        "development_overlap": policy.get("development_overlap"),
+        "threshold_selected_on_reported_population": True,
+        "precision_status": "empirical; not an established precision guarantee",
         "test_opened": False,
         "synthetic": config.synthetic,
         "warning": (

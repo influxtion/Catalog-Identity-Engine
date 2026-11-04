@@ -22,7 +22,17 @@ def main(argv: list[str] | None = None) -> int:
     development.add_argument("--config", type=Path, required=True)
     development.add_argument("--output", type=Path, required=True)
     development.add_argument("--negative-policy", choices=["all", "random_only"], default="all")
-    development.add_argument("--feature-version", choices=["2", "3"], default="2")
+    development.add_argument("--feature-version", choices=["2", "3", "4"], default="2")
+    development.add_argument("--num-leaves", type=int, default=15)
+    development.add_argument("--n-estimators", type=int, default=200)
+    development.add_argument(
+        "--learners", nargs="+", choices=["logistic", "lightgbm"], default=["logistic", "lightgbm"]
+    )
+    screening = commands.add_parser(
+        "screen-matchers", help="Fixed train-only entity-disjoint screening"
+    )
+    screening.add_argument("--config", type=Path, required=True)
+    screening.add_argument("--output", type=Path, required=True)
     diagnostics = commands.add_parser(
         "validation-errors", help="Inspect saved matcher validation errors"
     )
@@ -65,6 +75,12 @@ def main(argv: list[str] | None = None) -> int:
     profiling.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command == "screen-matchers":
+            from catalog_identity.evaluation.screening import screen
+
+            report = screen(load_config(args.config), args.output)
+            print(json.dumps({"selected_candidate": report["selected_candidate"]}, indent=2))
+            return 0
         if args.command == "validation-errors":
             from catalog_identity.evaluation.validation_errors import validation_errors
 
@@ -155,6 +171,9 @@ def main(argv: list[str] | None = None) -> int:
                 args.output,
                 negative_policy=args.negative_policy,
                 feature_version=args.feature_version,
+                num_leaves=args.num_leaves,
+                n_estimators=args.n_estimators,
+                learners=tuple(args.learners),
             )
             print(
                 json.dumps(

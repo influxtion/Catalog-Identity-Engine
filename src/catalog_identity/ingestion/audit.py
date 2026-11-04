@@ -8,6 +8,28 @@ from catalog_identity.normalization import normalize
 from catalog_identity.schema import Listing
 
 
+def development_overlap(train: BenchmarkSplit, validation: BenchmarkSplit) -> dict:
+    """Report official development overlap without imposing unseen-entity semantics."""
+    listing_overlap = len(train.listings.keys() & validation.listings.keys())
+    if listing_overlap:
+        raise ValueError("train/validation listing leakage")
+    complete = all(set(s.entity_ids) == set(s.listings) for s in (train, validation))
+    shared = set(train.entity_ids.values()) & set(validation.entity_ids.values())
+    return {
+        "listing_overlap": listing_overlap,
+        "entity_metadata_complete": complete,
+        "train_entities": len(set(train.entity_ids.values())),
+        "validation_entities": len(set(validation.entity_ids.values())),
+        "shared_entities": len(shared),
+        "validation_entities_seen_in_train": len(shared),
+        "protocol": "seen_entity_development"
+        if shared
+        else ("entity_disjoint_development" if complete else "entity_overlap_unknown"),
+        "note": "Calibration/policy entity partitioning does not remove "
+        "train/validation entity overlap.",
+    }
+
+
 def profile(listings: dict[str, Listing]) -> dict:
     normalized = [normalize(x) for x in listings.values()]
     columns = ("title", "brand", "category", "model", "gtin", "currency")

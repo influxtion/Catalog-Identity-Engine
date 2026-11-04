@@ -9,6 +9,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from catalog_identity.ingestion.loaders import BenchmarkSplit
+from catalog_identity.matching.alignment import AlignmentFeatures
 from catalog_identity.matching.distinctions import DistinctionFeatures
 from catalog_identity.matching.enriched import TextFeatures
 
@@ -28,8 +29,10 @@ class LearnedMatcher:
     ):
         if learner not in ("logistic", "lightgbm"):
             raise ValueError("unknown learner")
-        if feature_version not in ("2", "3"):
+        if feature_version not in ("2", "3", "4"):
             raise ValueError("unsupported feature version")
+        if num_leaves < 2 or n_estimators < 1:
+            raise ValueError("num_leaves must be at least 2 and n_estimators positive")
         self.settings = dict(
             learner=learner,
             seed=seed,
@@ -37,7 +40,9 @@ class LearnedMatcher:
             n_estimators=n_estimators,
             feature_version=feature_version,
         )
-        self.features = TextFeatures() if feature_version == "2" else DistinctionFeatures()
+        self.features = {"2": TextFeatures, "3": DistinctionFeatures, "4": AlignmentFeatures}[
+            feature_version
+        ]()
         self.calibration = None
         self.parameters = None
 
