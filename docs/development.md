@@ -149,7 +149,7 @@ completed without execution failure, but none improved recall. The phase stopped
 conditional full fitting, official validation or historical-test evaluation. See
 [the complete negative result](../experiments/README.md#completed-supervised-joint-model-comparison).
 
-## Earlier feature experiments
+## Conventional full fine-tuning comparison
 
 The final [conventional full fine-tuning registration](../experiments/full-encoder-preregistration.md)
 adds a separate CLS-only matcher that trains all six layers and the embeddings. It uses
@@ -166,6 +166,14 @@ are 30 minutes for screening and 20 minutes for a conditional full fit. The fixe
 three-epoch training audit records loss, gradients, parameter changes, orientation and
 accumulation counts; none can choose a checkpoint. This final configuration comparison
 does not isolate the cause of earlier results. No further architecture search follows.
+
+The completed comparison failed selection: weighted AP 0.86306 and mean 99% envelope
+recall 6.97%, versus control 0.91120 and 22.78%. All three optimization audits passed,
+but no fold improved target recall. The fixed stop rule was applied without a full fit,
+new official-validation replay or historical-test evaluation. See the
+[final results](../experiments/README.md#final-conventional-comparison-existing-control-retained).
+
+## Earlier feature experiments
 
 Feature versions 5 and 6 are optional semantic experiments on unchanged v3, separately
 [preregistered after the negative v4 screen](../experiments/matcher-semantic-preregistration.md).

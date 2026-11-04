@@ -1,5 +1,48 @@
 # Measured experiments
 
+## Final conventional comparison: existing control retained
+
+The [complete three-fold result](full-encoder-screening.json) and
+[registered stop decision](full-encoder-selection.json) record the final candidate's failure.
+The all-layer CLS-only model ran from clean source `442cdd6`; no model or training setting
+changed after its timing pilot. Total fold time was 812.26 seconds (13.54 minutes).
+
+| Candidate | Mean weighted AP | Mean recall at 99% weighted empirical precision | Improved folds |
+| --- | ---: | ---: | ---: |
+| Existing v3 control | 0.91120 | 22.78% | — |
+| Conventional all-layer MiniLM | 0.86306 | 6.97% | 0 of 3 |
+
+Each fold had a supported envelope, but the candidate failed both recall and AP requirements.
+At those selected thresholds, per-fold true/false positives were 339/1, 141/0 and 139/0,
+covering 60/39/31 matched positive entities. These are weighted development diagnostics;
+thresholds selected on their own population do not establish a 99% precision guarantee.
+
+Optimization checks passed in every fold: all intended parameters were trainable, all
+gradients were present and finite, and embeddings, early/late layers and classifier changed.
+The fixed three-epoch training losses and actual optimizer-step counts were:
+
+| Fold | Epoch 1 loss | Epoch 2 loss | Epoch 3 loss | Optimizer steps |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 0.61287 | 0.37866 | 0.31551 | 831 |
+| 2 | 0.57897 | 0.35343 | 0.28585 | 1113 |
+| 3 | 0.60236 | 0.36153 | 0.28996 | 1083 |
+
+Falling training loss confirms functioning optimization, not improved matching accuracy.
+The comparison does not identify a cause such as label noise, underfitting, freezing or
+head design. All epochs, accumulation groups, learning-rate ranges and parameter changes
+are preserved in the aggregate.
+
+**Architecture experiments stop here. No stronger matcher was demonstrated at the target
+precision.** Seven new configurations failed to improve the existing control under the
+registered rules; the accuracy goal remains unmet. Across all four registered phases,
+27 screening fits completed (12 + 9 + 3 + 3).
+The current matcher, default behavior and hierarchical merge policy remain unchanged.
+No conditional full fit, validation replay or historical-test evaluation followed either
+failed neural candidate. No pair-error-driven retuning followed the final outcome.
+The next useful evidence is a separately scoped training-only input/ambiguity audit and
+an independently labeled, entity-disjoint population of hard cases. These experiments
+do not establish label noise or freezing as the cause of the failures.
+
 ## Final conventional full fine-tuning resource gate
 
 The [separate registration](full-encoder-preregistration.md) tests one conventional
@@ -26,7 +69,7 @@ from a small sample. Pilot labels were synthetic and weights discarded; no accur
 was inspected. Validation/test files were not opened or hashed. The prior committed
 validation hash and fixed 0.99/five-match policy are carried into any conditional run.
 
-Before timing, GPU tests passed 128/128 with one PostgreSQL skip; CPU tests passed 126
+Before timing, GPU tests passed 128 with one PostgreSQL skip; CPU tests passed 126
 with PostgreSQL and two CUDA skips. Ruff passed for all 84 Python files. A real offline
 fictional artifact loaded without its original model cache: GPU roundtrip was exact,
 and CPU difference was 3.12e-8 within the declared 1e-5 tolerance.
@@ -53,7 +96,7 @@ evaluation, serving promotion or default change followed. No pair errors were in
 retuning. This tested configuration underperformed; it does not establish that all joint
 models or other training protocols would underperform.
 
-Across the three registered phases, 24 accuracy-screening fits completed (12 + 9 + 3).
+Across the first three registered phases, 24 accuracy-screening fits completed (12 + 9 + 3).
 Only phase 1 ran its previously reported selected/control full fit and validation replay.
 The earlier 22-correct/zero-false seen-entity validation result and historical test results
 remain unchanged. The work added tested representations, reproducible gates and an isolated

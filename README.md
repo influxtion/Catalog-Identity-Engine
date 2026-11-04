@@ -121,6 +121,15 @@ selection rule, so no further validation/test run or model promotion followed. T
 [complete comparison](experiments/README.md#completed-supervised-joint-model-comparison)
 reports the negative result without claiming an accuracy improvement.
 
+A final registered conventional model trained all six MiniLM layers with a simple CLS
+classifier. Optimization checks passed, but its mean recall at 99% empirical precision
+was 6.97% versus 22.78% for the existing control. The [final results and stop decision](experiments/README.md#final-conventional-comparison-existing-control-retained)
+preserve all 27 screening fits across four phases. Seven new configurations failed to
+improve the control under the registered rules; the accuracy goal remains unmet.
+Architecture experiments stopped and the current matcher remains unchanged. The next
+useful evidence is a training-only input/ambiguity audit and independently labeled,
+entity-disjoint hard cases.
+
 ## Run the local dashboard
 
 Install the `server` extra above, then use three terminals from the repository root:
