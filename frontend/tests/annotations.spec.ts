@@ -164,3 +164,22 @@ test("repeated codes require a precise quote location", async ({ page }) => {
     location,
   );
 });
+
+test("queue filters survive edits and reset between reviewers", async ({
+  page,
+}) => {
+  await page.goto("/annotate");
+  await login(page, "alice");
+  await page.getByLabel("Show cases").selectOption("all");
+  await page
+    .getByLabel("Reasoning and remaining uncertainty", { exact: true })
+    .fill("A note about the fictional lamp for the filter regression.");
+  await expect(page.getByLabel("Show cases")).toHaveValue("all");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Draft saved");
+  await page.getByLabel("Show cases").selectOption("submitted");
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await login(page, "bob");
+  await expect(page.getByLabel("Show cases")).toHaveValue("pending");
+  await expect(page.locator(".ann-case-list button").first()).toBeVisible();
+});

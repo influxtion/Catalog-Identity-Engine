@@ -240,7 +240,6 @@ export default function Annotate() {
     setDirty(true);
     setNotice("");
     setConfirming(false);
-    setFilter("pending");
   }
   async function save(submit: boolean) {
     if (!current) return;
@@ -282,6 +281,7 @@ export default function Annotate() {
     setSession(null);
     setQueue([]);
     setCurrent(null);
+    setFilter("pending");
     setDirty(false);
     setNotice("");
     setError("");

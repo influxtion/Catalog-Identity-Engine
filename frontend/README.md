@@ -42,6 +42,9 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
+The type check generates Next.js route definitions first. `next-env.d.ts` is generated
+locally and ignored, since development and production builds use different type paths.
+
 End-to-end tests start an isolated temporary SQLite catalog and a production Next.js
 server on ports 8011 and 3011. They do not modify the normal development database.
 They exercise search, pair review, graph/evaluation navigation, invalid/valid ingestion,

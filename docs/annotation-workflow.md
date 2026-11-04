@@ -9,6 +9,30 @@ This is diagnostic data collection. It neither changes official labels nor train
 a matcher. Family and exact-variant judgments remain separate from benchmark identity.
 The original audit has no human judgments; browser tests use original fictional lamps.
 
+## Open the existing local batch
+
+If `runs/annotation-access-v1/access-keys.json` already exists, the batch has been
+prepared. Do not import it again. From the repository root, start the API in one
+terminal:
+
+```powershell
+.venv\Scripts\python.exe -m catalog_identity.cli serve
+```
+
+Start the app in a second terminal:
+
+```powershell
+cd frontend
+npm run dev
+```
+
+Leave both terminals running and open <http://127.0.0.1:3000/annotate>. In the private
+access file, copy the `access_key` for `reviewer-1` into **Reviewer access key**. The
+reviewer sees 145 assigned cases; the adjudicator initially sees no ready cases.
+Use **Save draft** while exploring. **Submit and lock** records a final judgment.
+Stop either server with Ctrl+C in its terminal; saved reviews remain in `catalog.db`.
+No worker or benchmark training process is needed for this workflow.
+
 ## Prepare a batch
 
 Install the `server` extra from the project setup. Use the same `DATABASE_URL` for
