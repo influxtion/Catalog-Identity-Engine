@@ -1,5 +1,56 @@
 # Measured experiments
 
+## Frozen semantic pair features: phase 2
+
+After publishing the failed v4 screen, a [separate preregistration](matcher-semantic-preregistration.md)
+fixed three candidates on unchanged v3: control, semantic cosine summaries (v5), and summaries
+plus symmetric title-vector interactions (v6). The nine CPU fits ran from clean commit
+`59ce11f`. [The aggregate](matcher-semantic-screening.json) preserves every outcome;
+[the recorded stop decision](matcher-semantic-selection.json) confirms no candidate qualified.
+
+| Candidate | Mean weighted AP | Mean recall at 99% weighted empirical precision | Folds improved over control |
+| --- | ---: | ---: | ---: |
+| v3 control | 0.91120 | 22.78% | — |
+| v5 semantic summaries | 0.91399 | 21.95% | 1 of 3 |
+| v6 summaries + interactions | 0.89664 | 8.92% | 0 of 3 |
+
+All three had supported envelopes in all folds. Neither semantic candidate met the fixed
+requirements of gains in two folds and at least .02 absolute mean recall gain; v6 also
+missed the AP guard. **The semantic additions did not improve the target high-precision
+matching objective.** The control remains selected. No representation or model changes
+followed these outcomes, and no official-validation experiment was run in phase 2.
+
+Frozen offline MiniLM encoded 4,920 unique field/content records from 2,841 training offers.
+All titles were present and within 256 tokens. Descriptions were missing for 702 offers and
+truncated for 293 of the 2,139 available descriptions. Missing fields used explicit zero
+vectors and availability flags. Precomputation took 72.99 seconds, including 49.12 seconds
+of encoding and 6.11 seconds of encoder loading. This run used CPU, batch size 64 and 14
+Torch compute/interoperation threads; timings describe this machine, not service latency.
+The cache started cold, then served all fold/candidate reuse without additional encoding.
+
+The aggregate records the pinned model revision, 11 actual local asset hashes, dependency
+versions, cache/timing counts and per-fold raw/weighted counts, AP, matched entity support,
+and 95/98/99% envelopes. The model card declares Apache-2.0; this does not license product
+data. No weights, vectors, product text or images are committed, and no model download ran.
+
+Phase 2 reused the already-exposed three training folds. These are development-selection
+diagnostics with thresholds selected on their reported populations, not independent 99%
+precision guarantees. Control settings, effective parameters, training checksum, v3 feature
+source hashes and every fold's AP/envelopes reproduce phase 1 exactly. Whole-source manifests
+differ because semantic routing, caching and evaluation were added; this is recorded explicitly.
+
+Across the two registered phases, 21 screening fits were run (12 + 9). Phase 1 additionally
+ran one selected/control full-train fit and one official-validation replay; phase 2 ran none.
+The prior validation result remains 22 correct matches, zero false matches and 4.4% recall
+on seen-entity development data. The held-out test and production/default behavior remain
+unchanged. These experiments improve reproducibility and diagnostic capability, not the
+measured high-precision matcher performance.
+
+```sh
+# Requires the previously cached pinned MiniLM assets; no downloads are permitted here.
+uv run catalog-identity screen-semantic --config configs/wdc-products-large.json --output runs/semantic-reproduction --cache runs/semantic-cache
+```
+
 ## Train-only entity screening of matcher v4
 
 The [preregistered matrix](matcher-v4-preregistration.md) ran twelve fits from clean

@@ -88,6 +88,9 @@ The stricter registered rule requires gains in two folds, at least .02 absolute 
 gain, support in all three folds and mean weighted AP within 1% of control. Reusing exposed
 folds makes this development selection, not independent generalization evidence. Official
 validation is run only if a semantic candidate qualifies; otherwise the phase stops.
+The completed registered experiment selected the control and stopped without official
+validation: neither v5 nor v6 improved the target high-precision recall. All outcomes are
+preserved in [the phase 2 report](../experiments/README.md#frozen-semantic-pair-features-phase-2).
 
 The enriched feature space adds train-fitted title/description character TF-IDF similarities,
 token containment, character overlap, and model-token/capacity/color/pack hints to the original

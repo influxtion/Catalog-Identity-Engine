@@ -1,0 +1,27 @@
+{
+  "development_only": true,
+  "selected_candidate": "v3-control",
+  "semantic_candidate_qualified": false,
+  "official_validation_runs_in_phase2": 0,
+  "test_opened": false,
+  "promotion": false,
+  "stopping_rule_applied": true,
+  "phase1_screening_fits": 12,
+  "phase2_screening_fits": 9,
+  "phase1_full_train_fits_and_validation_replays": 1,
+  "control_reproducibility": {
+    "train_hash_equal": true,
+    "model_settings_equal": true,
+    "effective_parameters_equal": true,
+    "all_fold_raw_AP_weighted_AP_and_envelopes_exactly_equal": true,
+    "unchanged_feature_source_files": [
+      "matching/distinctions.py",
+      "matching/enriched.py",
+      "matching/features.py",
+      "normalization/__init__.py"
+    ],
+    "phase1_commit": "5dac4778bde63fff3efdf87c68491458c8dc6e39",
+    "phase2_commit": "59ce11f13e2d6ffa7cda2cae166392710a853033",
+    "note": "Source manifests differ because optional semantic routing, cache, evaluation and reporting were added. No identical whole-source claim."
+  }
+}

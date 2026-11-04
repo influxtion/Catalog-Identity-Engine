@@ -100,6 +100,10 @@ uv run catalog-identity screen-semantic --config configs/wdc-products-large.json
 It requires previously cached model assets, runs offline, and uses the stricter
 [phase 2 selection rule](experiments/matcher-semantic-preregistration.md). Cache records stay
 under ignored `runs/`; the CLI and service defaults remain unchanged.
+The completed semantic screen also retained the control: summaries slightly improved AP
+but reduced recall at the target precision, and vector interactions performed worse.
+No further official-validation run followed that failed selection. See
+[the complete phase 2 outcomes](experiments/README.md#frozen-semantic-pair-features-phase-2).
 
 ## Run the local dashboard
 
