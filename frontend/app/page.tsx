@@ -182,6 +182,10 @@ export default function Dashboard() {
               )}
             </button>
           ))}
+          <a className="annotation-nav" href="/annotate">
+            <Icon name="review" />
+            Evidence annotation
+          </a>
         </nav>
         <div className="sidebar-bottom">
           <div className="sidebar-note">

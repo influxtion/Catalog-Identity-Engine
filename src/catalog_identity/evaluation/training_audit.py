@@ -279,5 +279,8 @@ def run_audit(config, output: Path, tokenizer_directory=None, control_report=Non
         (output / name).write_text(
             "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8"
         )
+    report["review_artifacts_sha256"] = {
+        name: file_hash(output / name) for name in ("review-blind.jsonl", "review-key.jsonl")
+    }
     write_json(output / "audit.json", report)
     return report
