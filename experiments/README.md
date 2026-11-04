@@ -1,5 +1,36 @@
 # Measured experiments
 
+## Final conventional full fine-tuning resource gate
+
+The [separate registration](full-encoder-preregistration.md) tests one conventional
+all-layer CLS-only model after the local GPU removed the original CPU constraint.
+It is a complete configuration comparison, not an explanation of why the earlier
+partial-freeze/custom-head configuration failed. No further architecture candidates
+follow this one. Earlier negative results remain unchanged below.
+
+The [timing-only pilot](full-encoder-timing.json), from clean source `4a1c865`, passed
+the prospective 30-minute screening and 20-minute conditional full-fit caps:
+
+| Measurement | Actual pilot or conservative projection |
+| --- | ---: |
+| Training throughput | 164.29 pairs/s |
+| Symmetric inference throughput | 254.68 pairs/s |
+| Complete TRAIN token preparation | 3.03 seconds |
+| Projected three-fold screening | 21.12 minutes |
+| Projected full fit plus calibration/policy/replay | 11.47 minutes |
+| GPU peak allocated / reserved | 1023.07 / 1128.00 MiB |
+
+The projection includes a 1.5 safety factor and a 60-second audit/artifact reserve per fit.
+Full training preparation was measured directly to avoid overcounting listing parsing
+from a small sample. Pilot labels were synthetic and weights discarded; no accuracy
+was inspected. Validation/test files were not opened or hashed. The prior committed
+validation hash and fixed 0.99/five-match policy are carried into any conditional run.
+
+Before timing, GPU tests passed 128/128 with one PostgreSQL skip; CPU tests passed 126
+with PostgreSQL and two CUDA skips. Ruff passed for all 84 Python files. A real offline
+fictional artifact loaded without its original model cache: GPU roundtrip was exact,
+and CPU difference was 3.12e-8 within the declared 1e-5 tolerance.
+
 ## Completed supervised joint-model comparison
 
 The single registered joint model completed all three folds from clean commit `7fe7579`
