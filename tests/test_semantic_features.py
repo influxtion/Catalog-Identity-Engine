@@ -204,6 +204,7 @@ class Reject(importlib.abc.MetaPathFinder):
             raise AssertionError('optional runtime imported: ' + fullname)
 sys.meta_path.insert(0, Reject())
 from catalog_identity.matching.learned import LearnedMatcher
+from catalog_identity.matching.cross_encoder import PairTokenizer
 for version in ('2', '3', '4'):
     LearnedMatcher(feature_version=version)
 """

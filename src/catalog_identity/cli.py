@@ -39,6 +39,25 @@ def main(argv: list[str] | None = None) -> int:
     semantic_screening.add_argument("--config", type=Path, required=True)
     semantic_screening.add_argument("--output", type=Path, required=True)
     semantic_screening.add_argument("--cache", type=Path, default=Path("runs/semantic-cache"))
+    joint_pilot = commands.add_parser(
+        "pilot-joint", help="Timing-only offline supervised matcher gate"
+    )
+    joint_pilot.add_argument("--config", type=Path, required=True)
+    joint_pilot.add_argument("--output", type=Path, required=True)
+    joint_pilot.add_argument("--validation-report", type=Path, required=True)
+    joint_screen = commands.add_parser(
+        "screen-joint", help="Gated train-only supervised matcher screening"
+    )
+    joint_screen.add_argument("--config", type=Path, required=True)
+    joint_screen.add_argument("--output", type=Path, required=True)
+    joint_screen.add_argument("--timing", type=Path, required=True)
+    joint_screen.add_argument("--control", type=Path, required=True)
+    joint_develop = commands.add_parser(
+        "develop-joint", help="Validate a qualifying joint matcher once"
+    )
+    joint_develop.add_argument("--config", type=Path, required=True)
+    joint_develop.add_argument("--output", type=Path, required=True)
+    joint_develop.add_argument("--screening", type=Path, required=True)
     diagnostics = commands.add_parser(
         "validation-errors", help="Inspect saved matcher validation errors"
     )
@@ -81,6 +100,36 @@ def main(argv: list[str] | None = None) -> int:
     profiling.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command == "develop-joint":
+            from catalog_identity.evaluation.cross_encoder import develop_joint
+
+            report = develop_joint(load_config(args.config), args.output, args.screening)
+            print(json.dumps(report["full_validation_classification"], indent=2))
+            return 0
+        if args.command == "pilot-joint":
+            from catalog_identity.evaluation.cross_encoder import pilot
+
+            report = pilot(load_config(args.config), args.output, args.validation_report)
+            print(
+                json.dumps(
+                    {
+                        key: report[key]
+                        for key in (
+                            "gate_passed",
+                            "projected_screening_seconds",
+                            "projected_full_fit_validation_seconds",
+                        )
+                    },
+                    indent=2,
+                )
+            )
+            return 0
+        if args.command == "screen-joint":
+            from catalog_identity.evaluation.cross_encoder import screen_joint
+
+            report = screen_joint(load_config(args.config), args.output, args.timing, args.control)
+            print(json.dumps({"selected_candidate": report["selected_candidate"]}, indent=2))
+            return 0
         if args.command == "screen-semantic":
             from catalog_identity.evaluation.semantic_screening import screen_semantic
 

@@ -105,6 +105,10 @@ but reduced recall at the target precision, and vector interactions performed wo
 No further official-validation run followed that failed selection. See
 [the complete phase 2 outcomes](experiments/README.md#frozen-semantic-pair-features-phase-2).
 
+A final separately registered supervised joint-text experiment starts with a timing-only
+CPU gate. It stops before accuracy training if the fixed experiment exceeds its compute
+budgets. See [the resource-gated protocol](docs/development.md#supervised-joint-text-experiment-and-resource-gate).
+
 ## Run the local dashboard
 
 Install the `server` extra above, then use three terminals from the repository root:

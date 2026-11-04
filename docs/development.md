@@ -48,7 +48,52 @@ No new frozen test run or automatic production promotion is part of this experim
 The completed screen selected the existing v3 control; v4's mean ranking improvement did
 not translate into better high-precision recall. See [all measured outcomes](../experiments/README.md#train-only-entity-screening-of-matcher-v4).
 
-## Features and learners
+## Supervised joint-text experiment and resource gate
+
+The separately [registered phase 3](../experiments/cross-encoder-preregistration.md) trains
+only the final two layers of the cached six-layer MiniLM BERT backbone, plus a small head
+combining final CLS with fold-fitted standardized v3 evidence. The first four layers and
+embeddings remain frozen and in evaluation mode. Balanced 256-token pairs preserve both
+titles, account for field labels/special tokens, and allocate remaining capacity to brand
+and description. Inference averages both orientation logits before sigmoid.
+
+Training is fixed at three epochs, all retained pairs, float32 CPU with 14 threads,
+microbatch 8 and accumulation 4. Epochs, learning rates, freezing, warmup/decay, gradient
+clipping and final-checkpoint selection are registered before results. Missing data and
+benchmark identity semantics are unchanged. No serving adapter or default promotion is
+enabled by this experiment.
+
+```sh
+uv run catalog-identity pilot-joint --config configs/wdc-products-large.json --validation-report experiments/matcher-v4-validation.json --output runs/joint-timing
+# Run only if BOTH registered resource budgets pass.
+uv run catalog-identity screen-joint --config configs/wdc-products-large.json --timing runs/joint-timing/timing.json --control experiments/matcher-v4-screening.json --output runs/joint-screening
+# Run only if the completed screen qualifies under the fixed selection rule.
+uv run catalog-identity develop-joint --config configs/wdc-products-large.json --screening runs/joint-screening/screening.json --output runs/joint-selected
+```
+
+The timing-only pilot uses a deterministic spread of training text lengths with synthetic
+alternating labels, reports no accuracy and saves no pilot model. Four warmup microbatches
+precede 16 measured forward/backward microbatches; two-orientation inference is timed
+separately. Projection includes all three epochs, actual fold counts, fixed 256-token padding,
+measured model/feature/tokenization costs, serialization reserve and a 1.5 safety factor.
+Conditional validation pair counts come from the prior committed aggregate; the pilot does
+not open or hash validation/test data. Screening must project within 90 minutes and the
+conditional full fit/validation within 45 minutes. A failed gate stops the phase without
+changing epochs, token budgets, layers or data. Timing is hardware-specific, not accuracy.
+
+Screening verifies the saved control's training checksum, seed, weighting, numeric features,
+loader, fold and threshold-selection implementation. Models reset from original cached
+weights for each fold. Reused development folds and empirical precision envelopes retain
+their earlier limitations. Resource-aborted partial screens remain explicitly incomplete.
+
+Model artifacts use safetensors plus JSON v3 vocabulary/scaler/architecture/training metadata,
+the exported backbone configuration and tokenizer. Loading is local and self-contained;
+it verifies config/tokenizer hashes, tensor keys/shapes/dtypes/finiteness and calibration.
+No pickle or original-cache dependency is needed to reload a saved artifact. Input/source
+provenance accompanies actual selected-model artifacts. Optional runtime tests skip when
+PyTorch/Transformers are absent; pure token-budget and existing model tests remain available.
+
+## Earlier feature experiments
 
 Feature versions 5 and 6 are optional semantic experiments on unchanged v3, separately
 [preregistered after the negative v4 screen](../experiments/matcher-semantic-preregistration.md).
