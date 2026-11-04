@@ -108,6 +108,20 @@ Torch wheel differs from the original environment's pinned package versions. No 
 global Python settings or model assets are changed. GPU runtime installation is separate
 from model-weight downloads, which remain disabled.
 
+To reproduce the isolated runtime after creating the original CPU environment:
+
+```powershell
+.venv\Scripts\python -m venv .venv-gpu
+.venv-gpu\Scripts\python -m pip install --no-deps -r experiments/gpu-runtime-requirements.txt
+.venv-gpu\Scripts\python -m pip install --no-deps --index-url https://download.pytorch.org/whl/cu132 torch==2.15.0+cu132
+.venv-gpu\Scripts\python -m pip install --no-deps -e .
+.venv-gpu\Scripts\python -m pip check
+```
+
+The package pins and [environment/wheel record](../experiments/gpu-execution-environment.json)
+preserve the actual Windows/Python 3.12 setup; another platform needs an explicitly
+compatible runtime. Installing dependencies does not authorize model-weight downloads.
+
 Explicit `--device cuda` enables this path; CPU remains the default. The execution manifest
 records exact dependencies/hardware, IEEE float32 precision, deterministic algorithms,
 MATH attention, autocast off, and non-fused/non-foreach AdamW. It is fingerprinted and must
@@ -128,6 +142,12 @@ CPU/CUDA results need not be bitwise equal; the fictional interoperability smoke
 declared 1e-5 float32 tolerance. The [official Torch CUDA precision documentation](https://docs.pytorch.org/docs/2.15/notes/cuda.html)
 requires using the new precision API without mixing legacy TF32 setters; runtime flags
 follow that guidance. The wheel comes from the [official CUDA 13.2 index](https://download.pytorch.org/whl/cu132/torch/).
+
+The completed GPU screen failed the fixed accuracy-selection rule: mean weighted AP
+0.88199 and 99% envelope recall 5.71%, versus control 0.91120 and 22.78%. All three folds
+completed without execution failure, but none improved recall. The phase stopped without
+conditional full fitting, official validation or historical-test evaluation. See
+[the complete negative result](../experiments/README.md#completed-supervised-joint-model-comparison).
 
 ## Earlier feature experiments
 

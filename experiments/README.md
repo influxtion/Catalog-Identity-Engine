@@ -1,5 +1,40 @@
 # Measured experiments
 
+## Completed supervised joint-model comparison
+
+The single registered joint model completed all three folds from clean commit `7fe7579`
+using the frozen GPU execution profile. [Complete aggregates](cross-encoder-gpu-screening.json)
+and [the stop decision](cross-encoder-gpu-selection.json) preserve the negative outcome.
+
+| Candidate | Mean weighted AP | Mean recall at 99% weighted empirical precision | Improved folds |
+| --- | ---: | ---: | ---: |
+| Saved v3 control | 0.91120 | 22.78% | — |
+| Joint MiniLM + v3 evidence | 0.88199 | 5.71% | 0 of 3 |
+
+The joint model had a supported 99% envelope in every fold but failed the recall and AP
+requirements. Its per-fold envelopes selected 162/134/172 true positives, zero false
+positives, and 35/39/33 distinct matched positive entities. These thresholds were selected
+on the reported development fold; zero errors at those points is not a precision guarantee.
+
+**The fixed rule retained the existing v3 control.** Actual fold times totaled 503.80 seconds
+(8.40 minutes). No conditional full-train fit, new official-validation replay, historical-test
+evaluation, serving promotion or default change followed. No pair errors were inspected for
+retuning. This tested configuration underperformed; it does not establish that all joint
+models or other training protocols would underperform.
+
+Across the three registered phases, 24 accuracy-screening fits completed (12 + 9 + 3).
+Only phase 1 ran its previously reported selected/control full fit and validation replay.
+The earlier 22-correct/zero-false seen-entity validation result and historical test results
+remain unchanged. The work added tested representations, reproducible gates and an isolated
+GPU runtime, but **did not demonstrate a stronger matcher at the target precision**.
+
+Final regression checks passed: 120 tests in the CUDA environment (one PostgreSQL
+integration skip), and 119 in the unchanged CPU environment (PostgreSQL and CUDA skips).
+Ruff lint and formatting checks passed for all 80 Python files. The real fictional-data
+CUDA artifact roundtrip was exact on GPU; default CPU loading differed by at most
+2.16e-8, within the predeclared 1e-5 tolerance. Those checks establish implementation
+behavior, not benchmark accuracy.
+
 ## GPU execution gate for the unchanged joint model
 
 After the published CPU gate failed, a physical RTX 4060 Laptop GPU was identified.
@@ -21,7 +56,8 @@ An [initial GPU pilot](cross-encoder-gpu-timing-initial.json) also passed (16.98
 but was superseded after correctness-only changes added a conditional source-hash guard
 and portable decision-policy artifacts. No model, feature or training parameter changed,
 and no accuracy run preceded the replacement pilot. Both timings remain preserved.
-The final timing is now frozen before the single registered three-fold accuracy comparison.
+The final timing was frozen before the single registered three-fold accuracy comparison;
+its completed negative outcome is reported above.
 
 ## Supervised joint-text model: phase 3 resource gate
 

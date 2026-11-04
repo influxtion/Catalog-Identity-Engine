@@ -1,0 +1,22 @@
+{
+  "development_only": true,
+  "architecture": "joint-minilm-v1",
+  "selected_candidate": "v3-small",
+  "joint_candidate_qualified": false,
+  "stopping_rule_applied": true,
+  "phase3_accuracy_fits": 3,
+  "phase3_conditional_full_fits": 0,
+  "phase3_official_validation_replays": 0,
+  "phase3_historical_test_evaluations": 0,
+  "test_opened": false,
+  "production_or_default_promotion": false,
+  "completed_screening_fits_all_phases": 24,
+  "joint_mean_weighted_AP": 0.8819881541466302,
+  "joint_mean_weighted_recall_99": 0.05707430357742841,
+  "control_mean_weighted_AP": 0.9112022262358246,
+  "control_mean_weighted_recall_99": 0.22784215269750993,
+  "folds_improved": 0,
+  "actual_fold_seconds_total": 503.8031454999873,
+  "accuracy_source_commit": "7fe7579d2b45e2558e70769612ebfdad58c72b74",
+  "note": "The measured fixed joint configuration underperformed; this is not a claim about all cross-encoders. No error-driven retuning or additional candidates followed."
+}

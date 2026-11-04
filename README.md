@@ -115,6 +115,11 @@ is published without a new accuracy claim.
 The machine's physical NVIDIA GPU was subsequently identified. A separately registered
 [execution-only GPU addendum](experiments/cross-encoder-gpu-execution-addendum.md) preserves
 the exact model and training protocol, using an isolated CUDA runtime and a new timing gate.
+That gate passed and the registered joint model completed all three folds, but its mean
+recall at 99% empirical precision was 5.71% versus the control's 22.78%. It failed the fixed
+selection rule, so no further validation/test run or model promotion followed. The
+[complete comparison](experiments/README.md#completed-supervised-joint-model-comparison)
+reports the negative result without claiming an accuracy improvement.
 
 ## Run the local dashboard
 
