@@ -18,9 +18,10 @@ more unspecified negatives is not a diagnosis.
   inputs. All 2,841 normalized listing titles were distinct. This excludes one exact
   collision mechanism; it does **not** prove semantic distinguishability or clean labels.
 - Brand is present in 1,011 offers (35.6%); description in 2,139 (75.3%). Structured
-  model/MPN, GTIN, category and attributes are absent from every offer. The source
-  itself contains only ID, title, brand, description, price and currency per offer;
-  these missing fields are not sitting unused in this source adapter.
+  model/MPN, GTIN, category and attributes are absent from every offer. The non-gold
+  source observations are ID, title, brand, description, price and currency per offer;
+  these missing fields are not sitting unused in this source adapter. Supplied gold
+  cluster IDs are label metadata and are deliberately excluded from listing inputs.
 - 5,792 pairs (29.2%) lose some text under the registered token budget. No title is
   truncated; the affected fields are description and brand. No new mixed-label input
   collision appears. Distinguishing evidence could still be lost without creating
