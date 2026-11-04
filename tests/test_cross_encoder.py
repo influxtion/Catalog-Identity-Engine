@@ -63,6 +63,41 @@ def test_same_declared_revision_cannot_hide_changed_encoder_assets():
             require_same_encoder(expected, changed)
 
 
+def test_frozen_sources_bind_model_protocol_but_allow_unrelated_service_edits(monkeypatch):
+    import catalog_identity.evaluation.cross_encoder as module
+
+    previous = {"source_sha256": {path: "stable" for path in module.JOINT_SOURCE_FILES}}
+    current = json.loads(json.dumps(previous))
+    current["source_sha256"]["api/app.py"] = "unrelated-service-change"
+    monkeypatch.setattr(module, "implementation_manifest", lambda: current)
+    module.require_same_sources(previous)
+    current["source_sha256"]["matching/cross_encoder.py"] = "changed"
+    with pytest.raises(ValueError, match="implementation changed"):
+        module.require_same_sources(previous)
+
+
+def test_joint_artifact_policy_preserves_thresholds_and_provenance(tmp_path):
+    from catalog_identity.evaluation.cross_encoder import save_joint_policy
+
+    report = {
+        "match_policy": {"threshold": 0.9},
+        "rejection_policy": {"threshold": 0.8},
+        "reject_threshold": 0.2,
+        "inputs": {"train": "hash", "validation": "hash"},
+        "synthetic": True,
+        "development_overlap": {"shared_entities": 0},
+        "execution": {"fingerprint": "fixture"},
+        "selection_frozen_sha256": "screen-hash",
+        "implementation": {"git": {"commit": "fixture"}},
+        "training": {"epochs": 3},
+    }
+    save_joint_policy(tmp_path, report)
+    policy = json.loads((tmp_path / "policy.json").read_text())
+    assert policy["match"]["threshold"] == 0.9 and policy["reject_threshold"] == 0.2
+    assert policy["identity_level"] == "benchmark_entity" and policy["development_only"]
+    assert policy["selection_frozen_sha256"] == "screen-hash"
+
+
 def tiny_matcher(tokenizer=None, device="cpu"):
     torch = pytest.importorskip("torch")
     transformers = pytest.importorskip("transformers")

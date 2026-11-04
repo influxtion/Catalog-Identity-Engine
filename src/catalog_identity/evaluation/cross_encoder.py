@@ -21,6 +21,24 @@ from catalog_identity.matching.baseline import select_match_threshold
 from catalog_identity.matching.cross_encoder import ARCHITECTURE, TRAINING, JointMatcher
 from catalog_identity.matching.execution import configure_execution, require_same_execution
 
+JOINT_SOURCE_FILES = (
+    "matching/cross_encoder.py",
+    "matching/execution.py",
+    "matching/semantic_features.py",
+    "matching/distinctions.py",
+    "matching/enriched.py",
+    "matching/features.py",
+    "normalization/__init__.py",
+    "ingestion/loaders.py",
+    "retrieval/semantic.py",
+    "matching/baseline.py",
+    "evaluation/cross_encoder.py",
+    "evaluation/screening.py",
+    "evaluation/semantic_screening.py",
+    "evaluation/development.py",
+    "evaluation/metrics.py",
+)
+
 
 def subset(split, indices):
     pairs = tuple(split.pairs[i] for i in indices)
@@ -44,6 +62,31 @@ def require_same_encoder(expected, actual):
         raise ValueError(
             "pretrained encoder assets/configuration differ from frozen timing/selection"
         )
+
+
+def require_same_sources(previous):
+    current = implementation_manifest()["source_sha256"]
+    if any(previous["source_sha256"].get(path) != current[path] for path in JOINT_SOURCE_FILES):
+        raise ValueError("joint model/evaluation implementation changed after timing or selection")
+
+
+def save_joint_policy(directory, report):
+    policy = {
+        "match": report["match_policy"],
+        "reject": report["rejection_policy"],
+        "reject_threshold": report["reject_threshold"],
+        "inputs": report["inputs"],
+        "synthetic": report["synthetic"],
+        "identity_level": "benchmark_entity",
+        "development_only": True,
+        "development_overlap": report["development_overlap"],
+        "model_kind": "joint-minilm-v1",
+        "execution": report["execution"],
+        "selection_frozen_sha256": report["selection_frozen_sha256"],
+        "implementation": report["implementation"],
+        "training": report["training"],
+    }
+    write_json(directory / "policy.json", policy)
 
 
 def pilot(
@@ -296,14 +339,7 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path, de
         or timing["projected_full_fit_validation_seconds"] > 2700
     ):
         raise ValueError("timing projections exceed registered limits")
-    current_sources = implementation_manifest()["source_sha256"]
-    for path in (
-        "matching/cross_encoder.py",
-        "matching/execution.py",
-        "evaluation/cross_encoder.py",
-    ):
-        if timing["implementation"]["source_sha256"][path] != current_sources[path]:
-            raise ValueError("joint implementation changed after timing gate")
+    require_same_sources(timing["implementation"])
     control_report = json.loads(control_path.read_text(encoding="utf-8"))
     control = verify_control(config, control_report)
     train = load_wdc_pairs(config.train, "train")
@@ -431,6 +467,7 @@ def develop_joint(config, output: Path, screening_path: Path, device="cpu"):
         raise ValueError("training input/seed differs from frozen selection")
     if screening["architecture"] != ARCHITECTURE or screening["training"] != TRAINING:
         raise ValueError("joint configuration differs from frozen selection")
+    require_same_sources(screening["implementation"])
     if "execution" not in screening:
         raise ValueError("screening lacks execution fingerprint")
     execution = configure_execution(device)
@@ -552,6 +589,7 @@ def develop_joint(config, output: Path, screening_path: Path, device="cpu"):
     }
     output.mkdir(parents=True)
     model.save(output / "model")
+    save_joint_policy(output / "model", report)
     deadline()
     report["elapsed_seconds"] = perf_counter() - started
     write_json(output / "validation.json", report)
