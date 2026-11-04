@@ -108,6 +108,10 @@ No further official-validation run followed that failed selection. See
 A final separately registered supervised joint-text experiment starts with a timing-only
 CPU gate. It stops before accuracy training if the fixed experiment exceeds its compute
 budgets. See [the resource-gated protocol](docs/development.md#supervised-joint-text-experiment-and-resource-gate).
+The measured gate projected 167.9 minutes for screening and 100.8 minutes for conditional
+full fitting/validation, exceeding its 90/45-minute budgets. It stopped before accuracy
+training; [the timing evidence](experiments/README.md#supervised-joint-text-model-phase-3-resource-gate)
+is published without a new accuracy claim.
 
 ## Run the local dashboard
 

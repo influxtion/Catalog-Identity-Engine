@@ -80,6 +80,11 @@ Conditional validation pair counts come from the prior committed aggregate; the 
 not open or hash validation/test data. Screening must project within 90 minutes and the
 conditional full fit/validation within 45 minutes. A failed gate stops the phase without
 changing epochs, token budgets, layers or data. Timing is hardware-specific, not accuracy.
+The completed pilot failed both budgets: projected screening 167.88 minutes and conditional
+full fit/validation 100.82 minutes. No joint-model accuracy run followed. The
+[timing report](../experiments/cross-encoder-timing.json) and
+[measured limitations](../experiments/README.md#supervised-joint-text-model-phase-3-resource-gate)
+are preserved; a different compute plan would require separate authorization and registration.
 
 Screening verifies the saved control's training checksum, seed, weighting, numeric features,
 loader, fold and threshold-selection implementation. Models reset from original cached

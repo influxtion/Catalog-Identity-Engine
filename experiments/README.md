@@ -1,5 +1,58 @@
 # Measured experiments
 
+## Supervised joint-text model: phase 3 resource gate
+
+The final separately [registered architecture](cross-encoder-preregistration.md) combines
+the cached MiniLM backbone's jointly encoded listing pair with unchanged standardized v3
+evidence. Only its final two transformer layers and small prediction head train. Before
+accuracy work, a timing-only pilot ran from clean commit `af186b0` with the exact registered
+256-token padding, float32 CPU, 14 Torch threads, microbatch 8 and accumulation 4.
+
+[The timing aggregate](cross-encoder-timing.json) records the failed resource gate:
+
+| Measurement | Observed / projected | Registered limit |
+| --- | ---: | ---: |
+| Training throughput | 16.03 pairs/sec | — |
+| Two-orientation inference throughput | 30.94 pairs/sec | — |
+| Three-fold screening, including 1.5 safety factor | 167.88 min | 90 min |
+| Conditional full fit + validation, including safety factor | 100.82 min | 45 min |
+| Sampled process RSS | 893 MiB | Not an exact peak |
+
+**Both time budgets failed, so accuracy training stopped before it started.** No epochs,
+layers, token budgets or data were reduced to force a pass. No joint-model accuracy result
+is claimed, no pilot model was saved, and no validation/test data was opened or hashed.
+The conditional validation counts came from the existing committed phase 1 aggregate.
+
+The pilot sampled 160 training pairs spanning combined text-length quantiles and replaced
+their labels with synthetic alternating labels solely for computation. Four warmup and 16
+measured training microbatches were followed by two-orientation inference on all 160 pairs.
+Actual nonpadding length averaged 158.625 tokens (maximum 256); computation always used
+256-token padded tensors. Each orientation truncated 60 description sides and zero title
+or brand sides. These are sample diagnostics, not full-dataset truncation counts.
+
+Projection accounts for three epochs on 8,858/11,866/11,536 training pairs, their assessment
+sets, full training on 19,835 pairs if qualified, and 1,289 calibration / 1,178 policy /
+4,500 full-replay validation pairs. Model load, full numeric-feature fitting, tokenization,
+symmetric inference and serialization reserve are included. Timings are measurements and
+conservative estimates on this machine, not universal CPU or GPU performance claims.
+
+The implementation and safe local artifacts are covered by tests, including frozen-layer
+gradient checks, balanced tokenization, symmetric scoring, train-only vocabularies/scalers,
+corrupted tensor/tokenizer rejection and missing optional runtimes. A separate eight-pair
+fictional smoke trained three epochs and verified exact predictions after self-contained
+safetensors/config/tokenizer reload with the original-cache loader disabled. That smoke
+verifies mechanics only. A real-tokenizer API incompatibility was caught and fixed before
+the timing run; the registered BERT input representation was preserved.
+
+Phases 1 and 2 remain published negative accuracy experiments. Phase 3 is a measured
+compute stop, not an accuracy failure or success. Continuing this architecture requires
+a separately approved compute plan, such as suitable GPU execution; no GPU speed or
+matching improvement is assumed. The existing v3 control and all defaults remain unchanged.
+
+```sh
+uv run catalog-identity pilot-joint --config configs/wdc-products-large.json --validation-report experiments/matcher-v4-validation.json --output runs/joint-timing-reproduction
+```
+
 ## Frozen semantic pair features: phase 2
 
 After publishing the failed v4 screen, a [separate preregistration](matcher-semantic-preregistration.md)
