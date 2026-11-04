@@ -1,5 +1,9 @@
+import hashlib
 import json
+import os
 from concurrent.futures import ThreadPoolExecutor
+from datetime import date, timedelta
+from uuid import uuid4
 
 import pytest
 
@@ -8,6 +12,7 @@ pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
+from catalog_identity.annotations.report import analyze
 from catalog_identity.annotations.schema import GUIDELINE_VERSION, SaveRequest
 from catalog_identity.annotations.store import AnnotationStore, members
 from catalog_identity.api.app import create_app
@@ -234,3 +239,183 @@ def test_cli_import_export_keep_keys_out_of_logs(tmp_path, monkeypatch, capsys):
     summary = json.loads((tmp_path / "export/summary.json").read_text())
     assert summary["summary"]["status_counts"] == {"awaiting_reviews": 2}
     assert summary["summary"]["disagreement_rate"] is None
+
+
+def test_agreement_role_conflicts_and_operator_analysis(workspace, tmp_path):
+    client, store, access, headers, rows = workspace
+    key_path = tmp_path / "key.jsonl"
+    keys = [
+        {
+            "review_id": row["review_id"],
+            "benchmark_label": 1,
+            "primary_stratum": "reference",
+            "tags": ["code_disagreement_positive"],
+        }
+        for row in rows
+    ]
+    key_path.write_text("\n".join(json.dumps(k) for k in keys))
+    with pytest.raises(ValueError, match="resolve every case"):
+        analyze(store.export(access["batch_id"]), key_path)
+    for index, row in enumerate(rows):
+        url = "/annotations/cases/" + row["review_id"]
+        for name in ("alice", "bob"):
+            body = payload(client.get(url, headers=headers[name]).json())
+            if index == 0 and name == "bob":
+                body["judgment"]["evidence"][0]["role"] = "own_model"
+            assert client.post(url, headers=headers[name], json=body).status_code == 200
+    exported = store.export(access["batch_id"])
+    assert exported["summary"]["status_counts"] == {"needs_adjudication": 1, "agreed": 1}
+    with pytest.raises(ValueError, match="resolve every case"):
+        analyze(exported, key_path)
+    url = "/annotations/cases/" + rows[0]["review_id"]
+    body = payload(client.get(url, headers=headers["carol"]).json(), "different")
+    body["judgment"]["input_sufficiency"] = "needs_source_check"
+    assert client.post(url, headers=headers["carol"], json=body).status_code == 200
+    exported = store.export(access["batch_id"])
+    report = analyze(exported, key_path)
+    assert report["overall"]["cases"] == 2
+    assert report["overall"]["disagreement_rate"] == 0.5
+    assert report["overall"]["needs_more_evidence_rate"] == 0.5
+    assert report["overall"]["benchmark_label_comparison"] == {"differs": 1, "uncertain": 1}
+    assert report["primary_strata"]["reference"]["cases"] == 2
+    assert report["overlapping_tags"]["code_disagreement_positive"]["cases"] == 2
+    assert not report["official_labels_modified"]
+    assert key_path.read_text() == "\n".join(json.dumps(k) for k in keys)
+    key_path.write_text(json.dumps(keys[0]))
+    with pytest.raises(ValueError, match="exactly the batch"):
+        analyze(exported, key_path)
+
+
+def test_source_provenance_and_batch_isolation(workspace, tmp_path):
+    client, store, _, headers, rows = workspace
+    url = "/annotations/cases/" + rows[0]["review_id"]
+    body = payload(client.get(url, headers=headers["alice"]).json())
+    body["judgment"]["evidence"] = []
+    body["judgment"]["sources"] = [
+        {
+            "url": "https://example.org/fictional",
+            "checked_on": (date.today() + timedelta(days=1)).isoformat(),
+            "note": "Fictional source for testing date validation.",
+        }
+    ]
+    assert client.post(url, headers=headers["alice"], json=body).status_code == 422
+    body["judgment"]["sources"][0]["checked_on"] = date.today().isoformat()
+    body["judgment"]["sources"][0]["url"] = "javascript:alert(1)"
+    assert client.post(url, headers=headers["alice"], json=body).status_code == 422
+    body["judgment"]["sources"][0]["url"] = "https://example.org/fictional"
+    assert client.post(url, headers=headers["alice"], json=body).status_code == 200
+    path, second_rows = packet(tmp_path)
+    second_rows[0]["left"]["title"] = "A separate fictional packet"
+    second_rows[1]["review_id"] = fingerprint("second-batch-only")
+    path.write_text("\n".join(json.dumps(row) for row in second_rows))
+    second = store.initialize(path, "Other batch", ["alice", "bob"], "carol")
+    second_headers = {"Authorization": "Bearer " + second["members"][0]["access_key"]}
+    assert client.get(url, headers=second_headers).json()["judgment"]["reason"] == ""
+    assert client.post(url, headers=second_headers, json=body).status_code == 409
+    assert (
+        client.get(
+            "/annotations/cases/" + second_rows[1]["review_id"], headers=headers["alice"]
+        ).status_code
+        == 404
+    )
+
+
+def test_audit_binding_rejects_changed_packets_and_heldout_inputs(tmp_path):
+    packet_path, rows = packet(tmp_path)
+    audit = tmp_path / "audit.json"
+    report = {
+        "schema_version": "training-input-audit-v1",
+        "complete": True,
+        "dataset_name": "fiction",
+        "dataset_version": "1",
+        "seed": 42,
+        "synthetic": True,
+        "identity_level": "benchmark_entity",
+        "inputs": {"train": "a" * 64},
+        "validation_opened": False,
+        "test_opened": False,
+        "review_sampling": {"selected_pairs": len(rows)},
+        "review_artifacts_sha256": {
+            "review-blind.jsonl": hashlib.sha256(packet_path.read_bytes()).hexdigest()
+        },
+    }
+    audit.write_text(json.dumps(report))
+    database = Database("sqlite:///" + str(tmp_path / "bound.db"))
+    store = AnnotationStore(database)
+    access = store.initialize(packet_path, "Bound fixture", ["a", "b"], "c", audit)
+    provenance = store.export(access["batch_id"])["batch"]["provenance"]
+    assert provenance["packet_audit_binding"] == "checksum_verified"
+    assert provenance["sampling_seed"] == 42
+    packet_path.write_text(packet_path.read_text() + "\n")
+    with pytest.raises(ValueError, match="checksum differs"):
+        store.initialize(packet_path, "Changed", ["a", "b"], "c", audit)
+    report["test_opened"] = True
+    audit.write_text(json.dumps(report))
+    with pytest.raises(ValueError, match="training-only"):
+        store.initialize(packet_path, "Heldout", ["a", "b"], "c", audit)
+    database.close()
+
+
+def test_repeated_quotes_have_distinct_unicode_spans(tmp_path):
+    path, rows = packet(tmp_path)
+    text = "💡 Own model R7; compatible with R7 hubs."
+    rows[0]["left"]["title"] = text
+    path.write_text("\n".join(json.dumps(row) for row in rows))
+    database = Database("sqlite:///" + str(tmp_path / "spans.db"))
+    store = AnnotationStore(database)
+    access = store.initialize(path, "Spans", ["a", "b"], "c")
+    actor = store.authenticate(access["members"][0]["access_key"])
+    case_id = rows[0]["review_id"]
+    body = payload(store.case(actor, case_id))
+    evidence = body["judgment"]["evidence"][0]
+    evidence.update(quote="R7", role="compatibility")
+    with pytest.raises(ValueError, match="occurs more than once"):
+        store.save(actor, case_id, SaveRequest.model_validate(body))
+    evidence["start"] = text.rindex("R7") + 1  # UTF-16 offset would be wrong after the emoji.
+    with pytest.raises(ValueError, match="quote must occur"):
+        store.save(actor, case_id, SaveRequest.model_validate(body))
+    evidence["start"] = text.rindex("R7")
+    body["judgment"]["evidence"].append(
+        {**evidence, "start": text.index("R7"), "role": "own_model"}
+    )
+    store.save(actor, case_id, SaveRequest.model_validate(body))
+    own = store.case(actor, case_id)["judgment"]
+    assert own["evidence"][0]["start"] == text.rindex("R7")
+    from catalog_identity.annotations.schema import disagreement
+
+    assert not disagreement(own, own)
+    database.close()
+
+
+@pytest.mark.skipif(not os.getenv("TEST_DATABASE_URL"), reason="PostgreSQL URL not configured")
+def test_postgres_annotation_locking(tmp_path):
+    path, rows = packet(tmp_path)
+    for row in rows:
+        row["review_id"] = fingerprint(["postgres-fiction", uuid4().hex])
+    path.write_text("\n".join(json.dumps(row) for row in rows))
+    database = Database(os.environ["TEST_DATABASE_URL"])
+    other_database = Database(os.environ["TEST_DATABASE_URL"])
+    first, second = AnnotationStore(database), AnnotationStore(other_database)
+    access = first.initialize(path, "Postgres fixture", ["a", "b"], "c")
+    actor = first.authenticate(access["members"][0]["access_key"])
+    case_id = rows[0]["review_id"]
+    body = payload(first.case(actor, case_id))
+    body["submit"] = False
+
+    def save(service):
+        try:
+            service.save(actor, case_id, SaveRequest.model_validate(body))
+            return "saved"
+        except Conflict:
+            return "stale"
+
+    try:
+        with ThreadPoolExecutor(2) as executor:
+            assert sorted(executor.map(save, (first, second))) == ["saved", "stale"]
+        request = SaveRequest.model_validate(payload(second.case(actor, case_id)))
+        second.save(actor, case_id, request)
+        assert first.case(actor, case_id)["status"] == "submitted"
+        assert len(first.export(access["batch_id"])["history"]) == 3
+    finally:
+        database.close()
+        other_database.close()

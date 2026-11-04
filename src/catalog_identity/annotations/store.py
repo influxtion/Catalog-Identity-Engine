@@ -101,14 +101,32 @@ class AnnotationStore:
                 "complete"
             ):
                 raise ValueError("a completed training input audit is required")
+            if (
+                report.get("validation_opened") is not False
+                or report.get("test_opened") is not False
+                or set(report.get("inputs", {})) != {"train"}
+            ):
+                raise ValueError("audit provenance must be training-only")
             if report["review_sampling"]["selected_pairs"] != len(rows):
                 raise ValueError("packet size differs from audit")
+            expected_hash = report.get("review_artifacts_sha256", {}).get("review-blind.jsonl")
+            if expected_hash and expected_hash != packet_hash:
+                raise ValueError("packet checksum differs from audit")
             provenance.update(
                 {
                     "audit_sha256": hashlib.sha256(audit.read_bytes()).hexdigest(),
                     "training_inputs": report["inputs"],
                     "synthetic": report["synthetic"],
                     "dataset_name": report["dataset_name"],
+                    "dataset_version": report["dataset_version"],
+                    "sampling_seed": report["seed"],
+                    "identity_level": report["identity_level"],
+                    "review_key_sha256": report.get("review_artifacts_sha256", {}).get(
+                        "review-key.jsonl"
+                    ),
+                    "packet_audit_binding": "checksum_verified"
+                    if expected_hash
+                    else "operator_supplied_legacy_report",
                 }
             )
         credentials = []
@@ -312,10 +330,16 @@ class AnnotationStore:
                 or request.guideline_version != GUIDELINE_VERSION
             ):
                 raise Conflict("case or guidelines changed; reload before saving")
-            for item in judgment.evidence:
+            for index, item in enumerate(judgment.evidence):
                 text = case["data"][item.side].get(item.field) or ""
-                if item.quote not in text:
+                position = item.start if item.start is not None else text.find(item.quote)
+                if position < 0 or text[position : position + len(item.quote)] != item.quote:
                     raise ValueError("evidence quote must occur in the selected listing field")
+                if item.start is None and text.find(item.quote, position + 1) >= 0:
+                    raise ValueError(
+                        "quote occurs more than once; select its location or quote more context"
+                    )
+                data["evidence"][index]["start"] = position
             rows = self._reviews(c, actor["batch_id"], case_id)
             state, _, _ = self._state(rows)
             if actor["role"] == "adjudicator" and state == "awaiting_reviews":

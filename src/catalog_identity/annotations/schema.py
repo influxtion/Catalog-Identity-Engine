@@ -42,6 +42,7 @@ class Evidence(StrictModel):
     side: Literal["left", "right"]
     field: EvidenceField
     quote: str = Field(min_length=1, max_length=2000)
+    start: int | None = Field(default=None, ge=0)
     role: Role
     interpretation: str = Field(min_length=3, max_length=2000)
 
@@ -136,6 +137,6 @@ def disagreement(a, b):
     roles = {}
     for annotation in (a, b):
         for evidence in annotation["evidence"]:
-            key = (evidence["side"], evidence["field"], evidence["quote"])
+            key = (evidence["side"], evidence["field"], evidence["quote"], evidence.get("start"))
             roles.setdefault(key, set()).add(evidence["role"])
     return any(len(values) > 1 for values in roles.values())

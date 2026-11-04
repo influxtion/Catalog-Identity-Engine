@@ -134,6 +134,11 @@ clearest review priority is 903 missed positives among 904 pairs with disjoint c
 The audit reproduced the saved control and prepared 145 local blinded review cases.
 It identifies missing evidence and annotation priorities, not a new matcher accuracy gain.
 
+The [annotation workflow](docs/annotation-workflow.md) now collects two independent reviews
+per case, exact quoted evidence, code roles and source provenance, followed by third-person
+adjudication. Open **Evidence annotation** in the dashboard. Private operator exports track
+completion and data needs by review stratum; they do not relabel benchmarks or train a model.
+
 ## Run the local dashboard
 
 Install the `server` extra above, then use three terminals from the repository root:
@@ -164,7 +169,8 @@ benchmark matcher or use PostgreSQL, follow [service setup](docs/service.md). Be
 never supply hierarchical family/variant probabilities.
 
 [Frontend instructions](frontend/README.md) cover the proxy, build, and isolated browser tests.
-This developer service has no authentication or tenant isolation; keep it local.
+Annotation assignments require individual access keys. Other catalog endpoints have no
+authentication or tenant isolation; keep the developer service local.
 
 ## What an original baseline run produces
 

@@ -136,8 +136,13 @@ def test_only_training_is_loaded_or_hashed_and_local_rows_are_ignored(tmp_path, 
         return fixture()
 
     def hasher(path):
-        assert path == config.train
-        calls.append("hash")
+        if path == config.train:
+            calls.append("hash")
+        else:
+            assert path in {
+                tmp_path / "out" / n for n in ("review-blind.jsonl", "review-key.jsonl")
+            }
+            assert path.is_file()
         return "a" * 64
 
     monkeypatch.setattr(module, "load_wdc_pairs", loader)
@@ -146,6 +151,10 @@ def test_only_training_is_loaded_or_hashed_and_local_rows_are_ignored(tmp_path, 
     report = run_audit(config, tmp_path / "out")
     assert calls == ["load", "hash"]
     assert not report["validation_opened"] and not report["test_opened"]
+    assert report["review_artifacts_sha256"] == {
+        "review-blind.jsonl": "a" * 64,
+        "review-key.jsonl": "a" * 64,
+    }
     assert "review-key.jsonl" in (tmp_path / "out/.gitignore").read_text()
     assert json.loads((tmp_path / "out/audit.json").read_text())["complete"]
     serialized = json.dumps(report)

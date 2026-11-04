@@ -27,6 +27,12 @@ the measured 100k synthetic run; it is not a full-service throughput claim.
 The explorer loads up to 200 records and filters that loaded view. Large-catalog
 pagination and graph virtualization are future work. No real product images are used.
 
+`/annotate` provides a separate blinded evidence workspace with assignment keys, draft
+resumption, exact quote locations, source checks, immutable submissions and third-person
+adjudication. Follow the [annotation guide](../docs/annotation-workflow.md) to import the
+145-case packet and collect independent reviews. The same-origin proxy forwards bearer
+credentials only to annotation routes. The private review key is never served to the UI.
+
 ## Checks
 
 ```sh
@@ -39,6 +45,8 @@ npm run test:e2e
 End-to-end tests start an isolated temporary SQLite catalog and a production Next.js
 server on ports 8011 and 3011. They do not modify the normal development database.
 They exercise search, pair review, graph/evaluation navigation, invalid/valid ingestion,
-and mobile layout. Chromium screenshots are generated under ignored `test-results/`.
+mobile layout, independent annotation/adjudication, and repeated-code span selection.
+Chromium screenshots are generated under ignored `test-results/`. Annotation tests use
+fictional cases and temporary access keys under ignored `runs/annotation-e2e/`.
 The API and worker are required for queued rebuilds; the UI explicitly marks old
 identity memberships as stale while a rebuild is pending.

@@ -46,6 +46,14 @@ without a mode keep their original baseline behavior. Completed summaries are av
 API documentation: <http://127.0.0.1:8000/docs>. Endpoints cover listing ingestion/search,
 candidate retrieval, pair inspection, family/variant identities, reviews, evaluations and jobs.
 
+The separate [annotation workflow](annotation-workflow.md) adds bearer-authenticated
+`GET /annotations/session`, `GET /annotations/cases`, `GET /annotations/cases/{id}` and
+`POST /annotations/cases/{id}`. The server derives the reviewer and batch from the access
+key. Saves require the case hash, guideline version and current review revision. Import,
+key rotation and exports are local operator CLI commands; no administration or private
+review-key endpoint is exposed. Annotation tables are additive and do not alter catalog
+labels, memberships, model versions or ordinary catalog review decisions.
+
 ## Identity and update behavior
 
 Ingestion is idempotent by source ID and payload hash. Changed records increment their

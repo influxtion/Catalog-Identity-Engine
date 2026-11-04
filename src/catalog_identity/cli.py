@@ -134,6 +134,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     annotation_export.add_argument("--batch", required=True)
     annotation_export.add_argument("--output", type=Path, required=True)
+    annotation_export.add_argument(
+        "--review-key",
+        type=Path,
+        help="Operator-only stratum analysis after all cases are resolved",
+    )
     annotation_rotate = commands.add_parser(
         "annotation-rotate", help="Replace one reviewer access key"
     )

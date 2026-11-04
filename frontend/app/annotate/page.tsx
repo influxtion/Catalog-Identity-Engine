@@ -10,6 +10,7 @@ type Evidence = {
   side: "left" | "right";
   field: string;
   quote: string;
+  start?: number | null;
   role: string;
   interpretation: string;
 };
@@ -72,6 +73,23 @@ const roles = {
   other: "Other observation",
 };
 const label = (value: string) => value.replaceAll("_", " ");
+
+function quoteLocations(text: string, quote: string) {
+  const matches: { start: number; context: string }[] = [];
+  const value = quote.trim();
+  if (!value) return matches;
+  for (
+    let offset = text.indexOf(value);
+    offset >= 0;
+    offset = text.indexOf(value, offset + 1)
+  ) {
+    matches.push({
+      start: Array.from(text.slice(0, offset)).length,
+      context: text.slice(Math.max(0, offset - 35), offset + value.length + 35),
+    });
+  }
+  return matches;
+}
 
 async function request<T>(
   key: string,
@@ -617,7 +635,7 @@ export default function Annotate() {
                                 side: "left",
                                 field: "title",
                                 quote: "",
-                                role: "own_model",
+                                role: "",
                                 interpretation: "",
                               },
                             ],
@@ -628,10 +646,26 @@ export default function Annotate() {
                       </button>
                     </div>
                     {judgment.evidence.map((ev, index) => {
+                      const locations = quoteLocations(
+                        (current[ev.side][
+                          ev.field as keyof Listing
+                        ] as string) || "",
+                        ev.quote,
+                      );
                       const edit = (patch: Partial<Evidence>) =>
                         change({
                           evidence: judgment.evidence.map((v, i) =>
-                            i === index ? { ...v, ...patch } : v,
+                            i === index
+                              ? {
+                                  ...v,
+                                  ...("quote" in patch ||
+                                  "side" in patch ||
+                                  "field" in patch
+                                    ? { start: null }
+                                    : {}),
+                                  ...patch,
+                                }
+                              : v,
                           ),
                         });
                       return (
@@ -675,6 +709,7 @@ export default function Annotate() {
                                 value={ev.role}
                                 onChange={(e) => edit({ role: e.target.value })}
                               >
+                                <option value="">Choose evidence role…</option>
                                 {Object.entries(roles).map(([value, title]) => (
                                   <option value={value} key={value}>
                                     {title}
@@ -693,6 +728,32 @@ export default function Annotate() {
                               placeholder="Copy from the selected listing field"
                             />
                           </label>
+                          {locations.length > 1 && (
+                            <label>
+                              Quote location
+                              <select
+                                aria-label="Quote location"
+                                value={ev.start ?? ""}
+                                onChange={(e) =>
+                                  edit({
+                                    start:
+                                      e.target.value === ""
+                                        ? null
+                                        : Number(e.target.value),
+                                  })
+                                }
+                              >
+                                <option value="">
+                                  This quote repeats. Choose the occurrence…
+                                </option>
+                                {locations.map((match) => (
+                                  <option key={match.start} value={match.start}>
+                                    Character {match.start + 1}: {match.context}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          )}
                           <label>
                             What this supports
                             <input

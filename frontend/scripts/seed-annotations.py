@@ -17,7 +17,7 @@ rows = [
         "left": {
             "title": f"Fictional Aster {index} blue desk lamp",
             "brand": "Aster",
-            "description": "A fictional lamp with a blue finish for workflow testing.",
+            "description": "💡 A fictional blue lamp. Own model R7; compatible with R7 hubs.",
         },
         "right": {
             "title": f"Fictional Aster {index} amber desk lamp",

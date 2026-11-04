@@ -22,6 +22,13 @@ def execute(args):
             filename = "access-key.json"
         else:
             result = store.export(args.batch)
+            if args.review_key:
+                from catalog_identity.annotations.report import analyze
+
+                report = analyze(result, args.review_key)
+                (args.output / "analysis.json").write_text(
+                    json.dumps(report, indent=2), encoding="utf-8"
+                )
             filename = "annotations.json"
             (args.output / "summary.json").write_text(
                 json.dumps(

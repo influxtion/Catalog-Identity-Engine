@@ -84,6 +84,7 @@ test("independent reviewers save, resume and lock before adjudication", async ({
     .fill("Fictional source entry used only to exercise the annotation form.");
   await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Draft saved");
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: testInfo.outputPath("annotation-desktop.png"),
     fullPage: true,
@@ -130,4 +131,36 @@ test("review workspace remains usable on a narrow screen", async ({
     path: testInfo.outputPath("annotation-mobile.png"),
     fullPage: true,
   });
+});
+
+test("repeated codes require a precise quote location", async ({ page }) => {
+  await page.goto("/annotate");
+  await login(page, "alice");
+  await page
+    .getByRole("button", { name: "+ Add evidence", exact: true })
+    .click();
+  await page.getByLabel("Field", { exact: true }).selectOption("description");
+  await page.getByLabel("Exact quote", { exact: true }).fill("R7");
+  await page
+    .getByLabel("Evidence role", { exact: true })
+    .selectOption("compatibility");
+  await page
+    .getByLabel("What this supports")
+    .fill("This occurrence refers to the compatible hub.");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page.locator(".ann-error")).toContainText(
+    "quote occurs more than once",
+  );
+  await page
+    .getByLabel("Quote location", { exact: true })
+    .selectOption({ index: 2 });
+  const location = await page
+    .getByLabel("Quote location", { exact: true })
+    .inputValue();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Draft saved");
+  await page.reload();
+  await expect(page.getByLabel("Quote location", { exact: true })).toHaveValue(
+    location,
+  );
 });
