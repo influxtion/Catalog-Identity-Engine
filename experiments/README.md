@@ -1,5 +1,28 @@
 # Measured experiments
 
+## GPU execution gate for the unchanged joint model
+
+After the published CPU gate failed, a physical RTX 4060 Laptop GPU was identified.
+The [execution-only addendum](cross-encoder-gpu-execution-addendum.md) retains the same
+single architecture, training schedule and accuracy-selection rule. The isolated
+[environment record](gpu-execution-environment.json) verifies that only Torch differs
+from the original package versions/lock: the official CUDA 13.2 build replaces CPU Torch.
+The original environment and drivers were not modified; existing cached model weights
+were reused offline.
+
+The [final synchronized GPU pilot](cross-encoder-gpu-timing.json), from clean source
+`e96d21a`, passed the unchanged budgets: **16.25 minutes projected screening** and
+**8.03 minutes projected conditional full fit/validation**, including the 1.5 safety factor.
+It used deterministic IEEE float32 execution, MATH attention, no autocast or TF32,
+microbatch 8 / accumulation 4, and the same training-only sample/synthetic compute labels.
+This is a resource result, not model accuracy.
+
+An [initial GPU pilot](cross-encoder-gpu-timing-initial.json) also passed (16.98 / 8.38 min),
+but was superseded after correctness-only changes added a conditional source-hash guard
+and portable decision-policy artifacts. No model, feature or training parameter changed,
+and no accuracy run preceded the replacement pilot. Both timings remain preserved.
+The final timing is now frozen before the single registered three-fold accuracy comparison.
+
 ## Supervised joint-text model: phase 3 resource gate
 
 The final separately [registered architecture](cross-encoder-preregistration.md) combines
