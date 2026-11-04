@@ -47,6 +47,7 @@ def develop(
     feature_version="2",
     num_leaves=15,
     n_estimators=200,
+    embedding_cache=None,
 ) -> dict:
     if output.exists():
         raise ValueError("output already exists")
@@ -66,6 +67,10 @@ def develop(
     overlap = development_overlap(train, validation)
     calibration, policy = validation_partitions(validation, config.seed)
     output.mkdir(parents=True)
+    if feature_version in ("5", "6") and embedding_cache is None:
+        from catalog_identity.matching.semantic_features import EmbeddingCache
+
+        embedding_cache = EmbeddingCache()
     report = {
         "phase": "validation_only",
         "development_only": True,
@@ -103,6 +108,7 @@ def develop(
             feature_version=feature_version,
             num_leaves=num_leaves,
             n_estimators=n_estimators,
+            embedding_cache=embedding_cache,
         ).fit(train)
         raw = model.predict(policy, calibrated=False)
         model.calibrate(calibration, calibration_weights)
@@ -155,5 +161,8 @@ def develop(
             "calibrated_probability_quality": probability_metrics(y, p, "sigmoid"),
         }
         report["models"][learner] = metrics
+    if feature_version in ("5", "6"):
+        report["semantic_encoder"] = embedding_cache.metadata
+        report["embedding_cache_stats"] = embedding_cache.stats
     write_json(output / "validation.json", report)
     return report

@@ -25,11 +25,17 @@ def sigmoid(x):
 
 class LearnedMatcher:
     def __init__(
-        self, learner="lightgbm", seed=42, num_leaves=15, n_estimators=200, feature_version="2"
+        self,
+        learner="lightgbm",
+        seed=42,
+        num_leaves=15,
+        n_estimators=200,
+        feature_version="2",
+        embedding_cache=None,
     ):
         if learner not in ("logistic", "lightgbm"):
             raise ValueError("unknown learner")
-        if feature_version not in ("2", "3", "4"):
+        if feature_version not in ("2", "3", "4", "5", "6"):
             raise ValueError("unsupported feature version")
         if num_leaves < 2 or n_estimators < 1:
             raise ValueError("num_leaves must be at least 2 and n_estimators positive")
@@ -40,9 +46,19 @@ class LearnedMatcher:
             n_estimators=n_estimators,
             feature_version=feature_version,
         )
-        self.features = {"2": TextFeatures, "3": DistinctionFeatures, "4": AlignmentFeatures}[
-            feature_version
-        ]()
+        if feature_version in ("5", "6"):
+            from catalog_identity.matching.semantic_features import (
+                SemanticFeatures,
+                SemanticInteractionFeatures,
+            )
+
+            self.features = (
+                SemanticFeatures if feature_version == "5" else SemanticInteractionFeatures
+            )(embedding_cache)
+        else:
+            self.features = {"2": TextFeatures, "3": DistinctionFeatures, "4": AlignmentFeatures}[
+                feature_version
+            ]()
         self.calibration = None
         self.parameters = None
 
@@ -131,7 +147,7 @@ class LearnedMatcher:
             self.booster.save_model(str(directory / "trees.txt"))
 
     @classmethod
-    def load(cls, directory: Path):
+    def load(cls, directory: Path, embedding_cache=None):
         data = json.loads((directory / "matcher.json").read_text(encoding="utf-8"))
         settings = {"feature_version": data["feature_version"], **data["settings"]}
         result = cls(**settings)
@@ -140,6 +156,10 @@ class LearnedMatcher:
         ):
             raise ValueError("model feature implementation does not match saved model")
         result.features = type(result.features).load(directory / "text-features.json")
+        if result.features.version in ("5", "6"):
+            if embedding_cache is not None:
+                result.features.embeddings = embedding_cache
+            result.features.check_encoder()
         result.calibration, result.parameters = data["calibration"], data["parameters"]
         if result.settings["learner"] == "lightgbm":
             import lightgbm as lgb

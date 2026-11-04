@@ -91,6 +91,16 @@ but reduced recall at the 99% empirical precision envelope. All unsuccessful can
 and the unchanged 22-correct/zero-false validation replay are preserved in
 [the experiment results](experiments/README.md#train-only-entity-screening-of-matcher-v4).
 
+A separate optional semantic experiment uses cached, frozen MiniLM pair features on v3:
+
+```sh
+uv run catalog-identity screen-semantic --config configs/wdc-products-large.json --output runs/semantic-screening
+```
+
+It requires previously cached model assets, runs offline, and uses the stricter
+[phase 2 selection rule](experiments/matcher-semantic-preregistration.md). Cache records stay
+under ignored `runs/`; the CLI and service defaults remain unchanged.
+
 ## Run the local dashboard
 
 Install the `server` extra above, then use three terminals from the repository root:

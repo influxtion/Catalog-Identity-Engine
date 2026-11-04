@@ -37,7 +37,7 @@ class EvaluationRequest(Request):
     config_name: str = Field(pattern=r"^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*\.json$")
     idempotency_key: str | None = Field(default=None, max_length=200)
     mode: Literal["validation", "baseline"] = "validation"
-    feature_version: Literal["2", "3", "4"] = "3"
+    feature_version: Literal["2", "3", "4", "5", "6"] = "3"
 
 
 def create_app(database_url=None, model_directory=None):

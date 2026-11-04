@@ -22,7 +22,7 @@ def main(argv: list[str] | None = None) -> int:
     development.add_argument("--config", type=Path, required=True)
     development.add_argument("--output", type=Path, required=True)
     development.add_argument("--negative-policy", choices=["all", "random_only"], default="all")
-    development.add_argument("--feature-version", choices=["2", "3", "4"], default="2")
+    development.add_argument("--feature-version", choices=["2", "3", "4", "5", "6"], default="2")
     development.add_argument("--num-leaves", type=int, default=15)
     development.add_argument("--n-estimators", type=int, default=200)
     development.add_argument(
@@ -33,6 +33,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     screening.add_argument("--config", type=Path, required=True)
     screening.add_argument("--output", type=Path, required=True)
+    semantic_screening = commands.add_parser(
+        "screen-semantic", help="Fixed offline semantic matcher screening"
+    )
+    semantic_screening.add_argument("--config", type=Path, required=True)
+    semantic_screening.add_argument("--output", type=Path, required=True)
+    semantic_screening.add_argument("--cache", type=Path, default=Path("runs/semantic-cache"))
     diagnostics = commands.add_parser(
         "validation-errors", help="Inspect saved matcher validation errors"
     )
@@ -75,6 +81,12 @@ def main(argv: list[str] | None = None) -> int:
     profiling.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command == "screen-semantic":
+            from catalog_identity.evaluation.semantic_screening import screen_semantic
+
+            report = screen_semantic(load_config(args.config), args.output, args.cache)
+            print(json.dumps({"selected_candidate": report["selected_candidate"]}, indent=2))
+            return 0
         if args.command == "screen-matchers":
             from catalog_identity.evaluation.screening import screen
 

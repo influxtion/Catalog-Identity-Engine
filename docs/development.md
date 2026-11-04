@@ -50,6 +50,45 @@ not translate into better high-precision recall. See [all measured outcomes](../
 
 ## Features and learners
 
+Feature versions 5 and 6 are optional semantic experiments on unchanged v3, separately
+[preregistered after the negative v4 screen](../experiments/matcher-semantic-preregistration.md).
+Version 5 adds title/title, description/description and symmetric cross-field cosine
+summaries. Availability flags describe both/one-sided titles and descriptions, and
+both/any cross comparisons; they do not correspond to the ordering of cosine minima/maxima.
+Version 6 adds 384 absolute differences and 384 elementwise products of title vectors.
+Missing fields are zero vectors plus availability, never encoded empty strings.
+
+The existing pinned MiniLM encoder runs offline on CPU with 256-token truncation and
+384-dimensional normalized output. These features require the optional `semantic` extra
+and previously cached model assets. They never enable downloads. Versions 2–4 do not
+import or load the optional runtime. No fine-tuning or corpus-fitted embedding transform
+is performed. Normalized title and description are encoded separately; description
+compatibility language remains learned evidence, not an identity constraint.
+
+`runs/semantic-cache` holds content-addressed numeric `.npz` records, loaded without pickle.
+Keys include exact weight/tokenizer/config asset hashes, model revision and dependency
+versions, normalization/preprocessing version, field type and text digest. Records validate
+identity, shape, float32 type, finiteness, unit norm and token count before use. Atomic writes
+avoid partial records; corrupt records fail explicitly. The in-memory cache keeps at most
+16,384 entries with least-recently-used eviction; evicted entries reload from validated disk
+records without re-encoding. Cache location is not part of model identity. Portable matcher
+metadata records exact encoder requirements and verifies them
+against the offline local encoder on load. Caches and embeddings must stay uncommitted.
+
+```sh
+# Requires the already cached pinned MiniLM assets; this command never downloads them.
+uv run catalog-identity screen-semantic --config configs/wdc-products-large.json --output runs/semantic-screening --cache runs/semantic-cache
+```
+
+This command runs exactly nine fits across the existing three training entity folds. One
+encoder and training-only vector cache serve all fits, while vocabularies and classifiers
+fit separately per fold. Reports include missing/truncated fields, asset hashes, runtime
+versions, encoding/thread settings, cache/encoding/fit timing, and every candidate outcome.
+The stricter registered rule requires gains in two folds, at least .02 absolute mean recall
+gain, support in all three folds and mean weighted AP within 1% of control. Reusing exposed
+folds makes this development selection, not independent generalization evidence. Official
+validation is run only if a semantic candidate qualifies; otherwise the phase stops.
+
 The enriched feature space adds train-fitted title/description character TF-IDF similarities,
 token containment, character overlap, and model-token/capacity/color/pack hints to the original
 structured comparisons. Text hints are weak features; they are not extracted ground truth,

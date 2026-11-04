@@ -10,7 +10,16 @@ def implementation_manifest():
     package = Path(__file__).resolve().parents[1]
     root = package.parents[1]
     dependencies = {}
-    for name in ("numpy", "scikit-learn", "lightgbm", "sentence-transformers", "faiss-cpu"):
+    for name in (
+        "numpy",
+        "scikit-learn",
+        "lightgbm",
+        "sentence-transformers",
+        "faiss-cpu",
+        "torch",
+        "transformers",
+        "tokenizers",
+    ):
         try:
             dependencies[name] = version(name)
         except PackageNotFoundError:
