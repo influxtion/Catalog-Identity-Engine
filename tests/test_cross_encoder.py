@@ -4,7 +4,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from catalog_identity.evaluation.cross_encoder import pilot, projected_cost, screen_joint
+from catalog_identity.evaluation.cross_encoder import (
+    pilot,
+    projected_cost,
+    require_same_encoder,
+    screen_joint,
+)
 from catalog_identity.evaluation.runner import file_hash
 from catalog_identity.evaluation.synthetic import write_synthetic
 from catalog_identity.ingestion.loaders import BenchmarkSplit, LabeledPair, load_wdc_pairs
@@ -43,6 +48,19 @@ class FakeTokenizer:
     def save_pretrained(self, path):
         Path(path).mkdir(parents=True)
         (Path(path) / "tokenizer.json").write_text(json.dumps(self.vocabulary))
+
+
+def test_same_declared_revision_cannot_hide_changed_encoder_assets():
+    expected = {
+        "revision": "unchanged",
+        "asset_sha256": {"weights": "original", "tokenizer": "original"},
+    }
+    require_same_encoder(expected, json.loads(json.dumps(expected)))
+    for key in ("weights", "tokenizer"):
+        changed = json.loads(json.dumps(expected))
+        changed["asset_sha256"][key] = "modified"
+        with pytest.raises(ValueError, match="encoder assets"):
+            require_same_encoder(expected, changed)
 
 
 def tiny_matcher(tokenizer=None, device="cpu"):

@@ -39,6 +39,13 @@ def projected_cost(train_count, assessment_count, train_rate, inference_rate, ov
     return 1.5 * (3 * train_count / train_rate + assessment_count / inference_rate + overhead)
 
 
+def require_same_encoder(expected, actual):
+    if expected != actual:
+        raise ValueError(
+            "pretrained encoder assets/configuration differ from frozen timing/selection"
+        )
+
+
 def pilot(
     config,
     output: Path,
@@ -327,6 +334,7 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path, de
         "architecture": ARCHITECTURE,
         "training": TRAINING,
         "execution": execution,
+        "encoder": timing["encoder"],
         "timing_sha256": file_hash(timing_path),
         "control_sha256": file_hash(control_path),
         "control_source_commit": control_report["implementation"]["git"],
@@ -355,6 +363,7 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path, de
         started = perf_counter()
         model = JointMatcher(device=device)  # Fresh immutable backbone for every fold.
         require_same_execution(execution, model.execution)
+        require_same_encoder(timing["encoder"], model.encoder_metadata)
         numeric = model.fit_features(fit)
         prepared = model.prepare(fit, numeric)
         check_deadline()
@@ -446,6 +455,7 @@ def develop_joint(config, output: Path, screening_path: Path, device="cpu"):
     calibration, policy = validation_partitions(validation, 42)
     model = JointMatcher(device=device)
     require_same_execution(execution, model.execution)
+    require_same_encoder(screening["encoder"], model.encoder_metadata)
     microbatch = screening["candidates"][1]["folds"][0]["training_record"]["microbatch"]
     numeric = model.fit_features(train)
     prepared = model.prepare(train, numeric)
