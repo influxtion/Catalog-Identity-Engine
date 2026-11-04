@@ -1,0 +1,498 @@
+{
+  "experiment": "matcher-v4 fixed train-only screening and selected-control replay",
+  "development_only": true,
+  "selection_frozen_before_official_validation": true,
+  "selection_commit": "e442ff0",
+  "selected_candidate": "v3-small",
+  "control_candidate": "v3-small",
+  "same_candidate_reused_for_both_roles": true,
+  "official_validation_replays": 1,
+  "test_opened": false,
+  "promotion": false,
+  "screening_aggregate": "matcher-v4-screening.json",
+  "development": {
+    "calibration_pairs": 1289,
+    "cross_partition_pairs_excluded": 2033,
+    "development_only": true,
+    "development_overlap": {
+      "entity_metadata_complete": true,
+      "listing_overlap": 0,
+      "note": "Calibration/policy entity partitioning does not remove train/validation entity overlap.",
+      "protocol": "seen_entity_development",
+      "shared_entities": 500,
+      "train_entities": 500,
+      "validation_entities": 500,
+      "validation_entities_seen_in_train": 500
+    },
+    "feature_version": "3",
+    "implementation": {
+      "dependencies": {
+        "faiss-cpu": "1.15.1",
+        "lightgbm": "4.7.0",
+        "numpy": "2.5.4",
+        "scikit-learn": "1.9.1",
+        "sentence-transformers": "5.7.0"
+      },
+      "git": {
+        "commit": "e442ff0a304f487fac634c7c083f7f44c13fd375",
+        "working_tree_status": ""
+      },
+      "lock_sha256": "41a37954d39beb08711fc031712cfee2b76f3e5a260ca73663568eeb89fe755e",
+      "logical_cpus": 20,
+      "platform": "Windows-11-10.0.26200-SP0",
+      "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+      "python": "3.12.10",
+      "source_sha256": {
+        "__init__.py": "bd940e7034c9701c400f8c858a9327eb82f81ba780d29faa2589e7769225e0c8",
+        "api/__init__.py": "114ef20aa83bb02f8aceb4fe54d05812137f6973b58fb41f09b6927d0b8f0062",
+        "api/app.py": "f5730103e0668c96b8978fdea0b19d53b2c835fdaaaa576f6bacca17455cc287",
+        "cli.py": "8f9aa604f538d5b56a3e87295ad20994a49cac290708cb68149ff8f0c679f0b8",
+        "clustering/__init__.py": "920770d5e9bc5b332593ad3c3c744685ef951f1e04cda6a8fa453f567bd7f9d1",
+        "clustering/engine.py": "ce917dbc90182bda0b5920ebb8ec747a1bf371fe90ac889cd234b1d996f22e67",
+        "clustering/policy.py": "7131d7c5d2d8981070efb9e33f778db2da83e966a8bcce4464a8f8c85b8f6a1b",
+        "clustering/registry.py": "4fee5194f0a72ea4507c5d842e11dfaf00483249614f2afa5e6d93a06a9ad866",
+        "evaluation/__init__.py": "485db8519fd089d9a8a13171c30ce18b59865f851434e3d063b5f50dad668d26",
+        "evaluation/cluster_showcase.py": "b6a6b0d51251d82ddb11bf73bc01dd10b463fab0bc13698c9dc5e71f06c585b6",
+        "evaluation/clusters.py": "e9cbd6cfc4e83fe7561be7623c953732dd96be2caecda6b13d0f599225084438",
+        "evaluation/config.py": "477994b0f3755a26be5ee3013b6a055553a640849555d65b100bfca5c60068c5",
+        "evaluation/development.py": "e4e3a9015630ac177f2c618507578a08b03fc1086299a2629e40d2929f827ab6",
+        "evaluation/frozen.py": "d89c8866e988b71fe879a76ff6aca6c17ca4bbe19bfdb35753635a5f77171e4e",
+        "evaluation/incremental.py": "ae4f44765bfa58b367028e5b84c4737468bf3163ecbc475bac3a03c1d92ee416",
+        "evaluation/metrics.py": "4153e712d8e8bb4f6891db35974b062c92005546bb951c89cb84c4695cc4a283",
+        "evaluation/provenance.py": "b8ca06089b33460e9f2ed9d119836e865f5822c409b612dfdc28cc56680564d0",
+        "evaluation/retrieval_ablation.py": "d3efb115bb7b85f2e0b47ef2bce7afc0faf067afabdc95cc22f53e9d2a85fd10",
+        "evaluation/runner.py": "9a95998180bcb1e8b7c6b09c85476d166c1e48cba94323c8cda25df293e29e8f",
+        "evaluation/scaling.py": "53218f04372e50caac5f180fc63a90587db4fd68c4b6d825104bf1ab7995f8e4",
+        "evaluation/screening.py": "0c357d548964ee91d8470047de9458aab9127b24471d39a0715ec9f61aaddfd0",
+        "evaluation/synthetic.py": "2d24afd661278771d6202e0e414de79f12c2789d70776030b2901453eaac809b",
+        "evaluation/validation_errors.py": "499610b19954cdb2098403e9c51c0588c3da8f69357ebe1c8ee20d98e8913b5d",
+        "ingestion/__init__.py": "19f1dc169f3a73bd658c834829ada04de6125ccd7704c47ff0450a32b80b364e",
+        "ingestion/audit.py": "ee56d0506d469188e95a64485751bd9bbcc3f09eee9613a7b77524ef47fe8675",
+        "ingestion/loaders.py": "0680adf4ac0c46fa843381dc4315beedc4187df352deccab5d994e8621780bce",
+        "matching/__init__.py": "7787af7047f7211831820102973fea3fd4d28ff529ae0e17b8468a6c4e3be1dc",
+        "matching/alignment.py": "5bb52d89028ec60d869fe9732bc19ca96e11d6b55b75036e1a27162cda13ee52",
+        "matching/baseline.py": "f4d257ac4bc3a6b0c294f5bbc07a5c6f619b162c13644ec1357b32a6d2897dbb",
+        "matching/distinctions.py": "305db68aac50a0d0ce9b0f98d3312493e8931b333bba4419469fd2c7477682b0",
+        "matching/enriched.py": "939631baf9ba85f37b88dfdb5c896a69a03dcdf5479d0691d9bb08ba9f021b84",
+        "matching/features.py": "d7c303c41747758ad5ea13b5b4c5fa75814165e677339f4bf4977da2e275d6cf",
+        "matching/learned.py": "c2a4179473a0308404e8a7a5a36fac251b67642764db197c1fa500c69e2325bc",
+        "normalization/__init__.py": "1bb45ff2a5e77f8c13aa9a3ba117b3c8a79a6b57a58c613d71195ef039650af5",
+        "retrieval/__init__.py": "58145554231347ba766157936355da66c80f6c5263a61b9665902e7fb3457297",
+        "retrieval/semantic.py": "218a691103bc7e06f8e3708fc0e21182d82163c4a55ebeb61ed44d1f005ed241",
+        "schema.py": "6d3e37ce5fdbc1c0f5bffa07cbe1493e9a5330f2528f856ab18fead667294572",
+        "showcase.py": "c4a3f0f8aa17be344db88cc1b83dbb10b0151b1c0a8e0a6b44fc38fbc3b8dfcc",
+        "storage/__init__.py": "444f922d8c370ed760f9744ade0a18beb224004430e7b58b62aaa0be6bc51875",
+        "storage/catalog.py": "4c3aca4bbd8947cdc043798a6d06e262a31b5387365b6230461ef0105603a920",
+        "storage/database.py": "eb2375c0e420f164497f12f35631512ad5bb53a13838532cf43c5cc9bb69a6b9",
+        "storage/normalized.py": "67b54c9e3872b13baa4b33c2249ac85acfadb52153fdeed50a25b61d75cadbad",
+        "storage/worker.py": "c65eccbcbb386a39420c1a3b719212fcc2837736bab326b8fd9466d60481c79d"
+      }
+    },
+    "inputs": {
+      "train": "53148f25fb0a4796801f30554a09ac258e7ae72a022ad668647bbc99375554c5",
+      "validation": "3f49df54a8d46c6b7dc59cd003e9f2021fab396af04a5e81c27b6e122b1eba6d"
+    },
+    "models": {
+      "lightgbm": {
+        "calibrated_probability_quality": {
+          "average_precision": 0.752415509070185,
+          "brier_score": 0.09576733734633817,
+          "probability_calibration": "sigmoid; reliability is measured, not assumed",
+          "reliability_bins": [
+            {
+              "count": 758,
+              "lower": 0.0,
+              "mean_probability": 0.020481953312214148,
+              "positive_fraction": 0.03430079155672823,
+              "upper": 0.1
+            },
+            {
+              "count": 89,
+              "lower": 0.1,
+              "mean_probability": 0.1457392134382335,
+              "positive_fraction": 0.29213483146067415,
+              "upper": 0.2
+            },
+            {
+              "count": 64,
+              "lower": 0.2,
+              "mean_probability": 0.24723906061051162,
+              "positive_fraction": 0.296875,
+              "upper": 0.3
+            },
+            {
+              "count": 74,
+              "lower": 0.3,
+              "mean_probability": 0.35179081330002376,
+              "positive_fraction": 0.43243243243243246,
+              "upper": 0.4
+            },
+            {
+              "count": 75,
+              "lower": 0.4,
+              "mean_probability": 0.45456325690776206,
+              "positive_fraction": 0.5466666666666666,
+              "upper": 0.5
+            },
+            {
+              "count": 37,
+              "lower": 0.5,
+              "mean_probability": 0.5431033558019559,
+              "positive_fraction": 0.6486486486486487,
+              "upper": 0.6
+            },
+            {
+              "count": 26,
+              "lower": 0.6,
+              "mean_probability": 0.6486746589362866,
+              "positive_fraction": 0.8846153846153846,
+              "upper": 0.7
+            },
+            {
+              "count": 16,
+              "lower": 0.7,
+              "mean_probability": 0.74562833573972,
+              "positive_fraction": 0.9375,
+              "upper": 0.8
+            },
+            {
+              "count": 30,
+              "lower": 0.8,
+              "mean_probability": 0.86114450969322,
+              "positive_fraction": 0.9333333333333333,
+              "upper": 0.9
+            },
+            {
+              "count": 9,
+              "lower": 0.9,
+              "mean_probability": 0.9168303824636652,
+              "positive_fraction": 1.0,
+              "upper": 1.0
+            }
+          ]
+        },
+        "classification": {
+          "f1": 0.1015625,
+          "false_negatives": 230,
+          "false_positives": 0,
+          "pairs": 1178,
+          "precision": 1.0,
+          "recall": 0.053497942386831275,
+          "true_negatives": 935,
+          "true_positives": 13
+        },
+        "distinct_matched_positive_entities": 13,
+        "match_policy": {
+          "minimum_matches": 5,
+          "predicted_matches": 13,
+          "target_precision": 0.99,
+          "threshold": 0.8902757707668776,
+          "validation_precision": 1.0,
+          "validation_recall": 0.053497942386831275
+        },
+        "precision_status": "empirical; not an established precision guarantee",
+        "raw_probability_quality": {
+          "average_precision": 0.752415509070185,
+          "brier_score": 0.10420853771801689,
+          "probability_calibration": "none; reliability is measured, not assumed",
+          "reliability_bins": [
+            {
+              "count": 589,
+              "lower": 0.0,
+              "mean_probability": 0.019975246436999834,
+              "positive_fraction": 0.013582342954159592,
+              "upper": 0.1
+            },
+            {
+              "count": 128,
+              "lower": 0.1,
+              "mean_probability": 0.141646828417461,
+              "positive_fraction": 0.1171875,
+              "upper": 0.2
+            },
+            {
+              "count": 52,
+              "lower": 0.2,
+              "mean_probability": 0.23773209369708237,
+              "positive_fraction": 0.11538461538461539,
+              "upper": 0.3
+            },
+            {
+              "count": 51,
+              "lower": 0.3,
+              "mean_probability": 0.3450607742746998,
+              "positive_fraction": 0.29411764705882354,
+              "upper": 0.4
+            },
+            {
+              "count": 40,
+              "lower": 0.4,
+              "mean_probability": 0.4545277094369119,
+              "positive_fraction": 0.325,
+              "upper": 0.5
+            },
+            {
+              "count": 36,
+              "lower": 0.5,
+              "mean_probability": 0.5475605869997306,
+              "positive_fraction": 0.2777777777777778,
+              "upper": 0.6
+            },
+            {
+              "count": 58,
+              "lower": 0.6,
+              "mean_probability": 0.6520871162380586,
+              "positive_fraction": 0.3793103448275862,
+              "upper": 0.7
+            },
+            {
+              "count": 80,
+              "lower": 0.7,
+              "mean_probability": 0.7492893046947312,
+              "positive_fraction": 0.5125,
+              "upper": 0.8
+            },
+            {
+              "count": 78,
+              "lower": 0.8,
+              "mean_probability": 0.841599791648845,
+              "positive_fraction": 0.6666666666666666,
+              "upper": 0.9
+            },
+            {
+              "count": 66,
+              "lower": 0.9,
+              "mean_probability": 0.9573479924133163,
+              "positive_fraction": 0.9242424242424242,
+              "upper": 1.0
+            }
+          ]
+        },
+        "reject_threshold": 0.04686309678841227,
+        "settings": {
+          "feature_version": "3",
+          "learner": "lightgbm",
+          "n_estimators": 200,
+          "num_leaves": 15,
+          "seed": 42
+        },
+        "threshold_selected_on_reported_population": true
+      }
+    },
+    "partition_seed": 42,
+    "partition_weighting": "Positive weight 1, negative weight 2 corrects unequal inclusion probabilities. Classification counts and probability diagnostics describe the retained subset.",
+    "phase": "validation_only",
+    "policy_pairs": 1178,
+    "synthetic": false,
+    "test_opened": false,
+    "training_selection": {
+      "negative_policy": "all",
+      "original_pairs": 19835,
+      "positives": 8471,
+      "used_pairs": 19835
+    }
+  },
+  "full_validation_replay": {
+    "classification": {
+      "f1": 0.0842911877394636,
+      "false_negatives": 478,
+      "false_positives": 0,
+      "pairs": 4500,
+      "precision": 1.0,
+      "recall": 0.044,
+      "true_negatives": 4000,
+      "true_positives": 22
+    },
+    "development_only": true,
+    "development_overlap": {
+      "entity_metadata_complete": true,
+      "listing_overlap": 0,
+      "note": "Calibration/policy entity partitioning does not remove train/validation entity overlap.",
+      "protocol": "seen_entity_development",
+      "shared_entities": 500,
+      "train_entities": 500,
+      "validation_entities": 500,
+      "validation_entities_seen_in_train": 500
+    },
+    "error_breakdown": {
+      "false_negative": 478,
+      "false_negative:audio_channels:conflict": 2,
+      "false_negative:audio_channels:one_sided": 5,
+      "false_negative:code:conflict": 67,
+      "false_negative:code:one_sided": 164,
+      "false_negative:edition:conflict": 1,
+      "false_negative:edition:one_sided": 35,
+      "false_negative:form_factor:conflict": 1,
+      "false_negative:form_factor:one_sided": 24,
+      "false_negative:memory_standard:conflict": 1,
+      "false_negative:memory_standard:one_sided": 14,
+      "false_negative:quantity:conflict": 2,
+      "false_negative:quantity:one_sided": 11
+    },
+    "implementation": {
+      "dependencies": {
+        "faiss-cpu": "1.15.1",
+        "lightgbm": "4.7.0",
+        "numpy": "2.5.4",
+        "scikit-learn": "1.9.1",
+        "sentence-transformers": "5.7.0"
+      },
+      "git": {
+        "commit": "e442ff0a304f487fac634c7c083f7f44c13fd375",
+        "working_tree_status": ""
+      },
+      "lock_sha256": "41a37954d39beb08711fc031712cfee2b76f3e5a260ca73663568eeb89fe755e",
+      "logical_cpus": 20,
+      "platform": "Windows-11-10.0.26200-SP0",
+      "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+      "python": "3.12.10",
+      "source_sha256": {
+        "__init__.py": "bd940e7034c9701c400f8c858a9327eb82f81ba780d29faa2589e7769225e0c8",
+        "api/__init__.py": "114ef20aa83bb02f8aceb4fe54d05812137f6973b58fb41f09b6927d0b8f0062",
+        "api/app.py": "f5730103e0668c96b8978fdea0b19d53b2c835fdaaaa576f6bacca17455cc287",
+        "cli.py": "8f9aa604f538d5b56a3e87295ad20994a49cac290708cb68149ff8f0c679f0b8",
+        "clustering/__init__.py": "920770d5e9bc5b332593ad3c3c744685ef951f1e04cda6a8fa453f567bd7f9d1",
+        "clustering/engine.py": "ce917dbc90182bda0b5920ebb8ec747a1bf371fe90ac889cd234b1d996f22e67",
+        "clustering/policy.py": "7131d7c5d2d8981070efb9e33f778db2da83e966a8bcce4464a8f8c85b8f6a1b",
+        "clustering/registry.py": "4fee5194f0a72ea4507c5d842e11dfaf00483249614f2afa5e6d93a06a9ad866",
+        "evaluation/__init__.py": "485db8519fd089d9a8a13171c30ce18b59865f851434e3d063b5f50dad668d26",
+        "evaluation/cluster_showcase.py": "b6a6b0d51251d82ddb11bf73bc01dd10b463fab0bc13698c9dc5e71f06c585b6",
+        "evaluation/clusters.py": "e9cbd6cfc4e83fe7561be7623c953732dd96be2caecda6b13d0f599225084438",
+        "evaluation/config.py": "477994b0f3755a26be5ee3013b6a055553a640849555d65b100bfca5c60068c5",
+        "evaluation/development.py": "e4e3a9015630ac177f2c618507578a08b03fc1086299a2629e40d2929f827ab6",
+        "evaluation/frozen.py": "d89c8866e988b71fe879a76ff6aca6c17ca4bbe19bfdb35753635a5f77171e4e",
+        "evaluation/incremental.py": "ae4f44765bfa58b367028e5b84c4737468bf3163ecbc475bac3a03c1d92ee416",
+        "evaluation/metrics.py": "4153e712d8e8bb4f6891db35974b062c92005546bb951c89cb84c4695cc4a283",
+        "evaluation/provenance.py": "b8ca06089b33460e9f2ed9d119836e865f5822c409b612dfdc28cc56680564d0",
+        "evaluation/retrieval_ablation.py": "d3efb115bb7b85f2e0b47ef2bce7afc0faf067afabdc95cc22f53e9d2a85fd10",
+        "evaluation/runner.py": "9a95998180bcb1e8b7c6b09c85476d166c1e48cba94323c8cda25df293e29e8f",
+        "evaluation/scaling.py": "53218f04372e50caac5f180fc63a90587db4fd68c4b6d825104bf1ab7995f8e4",
+        "evaluation/screening.py": "0c357d548964ee91d8470047de9458aab9127b24471d39a0715ec9f61aaddfd0",
+        "evaluation/synthetic.py": "2d24afd661278771d6202e0e414de79f12c2789d70776030b2901453eaac809b",
+        "evaluation/validation_errors.py": "499610b19954cdb2098403e9c51c0588c3da8f69357ebe1c8ee20d98e8913b5d",
+        "ingestion/__init__.py": "19f1dc169f3a73bd658c834829ada04de6125ccd7704c47ff0450a32b80b364e",
+        "ingestion/audit.py": "ee56d0506d469188e95a64485751bd9bbcc3f09eee9613a7b77524ef47fe8675",
+        "ingestion/loaders.py": "0680adf4ac0c46fa843381dc4315beedc4187df352deccab5d994e8621780bce",
+        "matching/__init__.py": "7787af7047f7211831820102973fea3fd4d28ff529ae0e17b8468a6c4e3be1dc",
+        "matching/alignment.py": "5bb52d89028ec60d869fe9732bc19ca96e11d6b55b75036e1a27162cda13ee52",
+        "matching/baseline.py": "f4d257ac4bc3a6b0c294f5bbc07a5c6f619b162c13644ec1357b32a6d2897dbb",
+        "matching/distinctions.py": "305db68aac50a0d0ce9b0f98d3312493e8931b333bba4419469fd2c7477682b0",
+        "matching/enriched.py": "939631baf9ba85f37b88dfdb5c896a69a03dcdf5479d0691d9bb08ba9f021b84",
+        "matching/features.py": "d7c303c41747758ad5ea13b5b4c5fa75814165e677339f4bf4977da2e275d6cf",
+        "matching/learned.py": "c2a4179473a0308404e8a7a5a36fac251b67642764db197c1fa500c69e2325bc",
+        "normalization/__init__.py": "1bb45ff2a5e77f8c13aa9a3ba117b3c8a79a6b57a58c613d71195ef039650af5",
+        "retrieval/__init__.py": "58145554231347ba766157936355da66c80f6c5263a61b9665902e7fb3457297",
+        "retrieval/semantic.py": "218a691103bc7e06f8e3708fc0e21182d82163c4a55ebeb61ed44d1f005ed241",
+        "schema.py": "6d3e37ce5fdbc1c0f5bffa07cbe1493e9a5330f2528f856ab18fead667294572",
+        "showcase.py": "c4a3f0f8aa17be344db88cc1b83dbb10b0151b1c0a8e0a6b44fc38fbc3b8dfcc",
+        "storage/__init__.py": "444f922d8c370ed760f9744ade0a18beb224004430e7b58b62aaa0be6bc51875",
+        "storage/catalog.py": "4c3aca4bbd8947cdc043798a6d06e262a31b5387365b6230461ef0105603a920",
+        "storage/database.py": "eb2375c0e420f164497f12f35631512ad5bb53a13838532cf43c5cc9bb69a6b9",
+        "storage/normalized.py": "67b54c9e3872b13baa4b33c2249ac85acfadb52153fdeed50a25b61d75cadbad",
+        "storage/worker.py": "c65eccbcbb386a39420c1a3b719212fcc2837736bab326b8fd9466d60481c79d"
+      }
+    },
+    "inputs": {
+      "train": "53148f25fb0a4796801f30554a09ac258e7ae72a022ad668647bbc99375554c5",
+      "validation": "3f49df54a8d46c6b7dc59cd003e9f2021fab396af04a5e81c27b6e122b1eba6d"
+    },
+    "match_threshold": 0.8902757707668776,
+    "matched_positive_entities": 22,
+    "model_files": {
+      "matcher.json": "dafdca80085473c0e36599af3f0b705ef9ba945d1e7913fdd221879e5bb2e1a5",
+      "policy.json": "9fafc68b1093a301ccbc2091b4dec3802f7b1688f82fb5b44d6ae6e73202484b",
+      "text-features.json": "a5e3793b7e2ae6d3299bdcb6913ca2ab1c4598a5d58802b4231a1b83c849dd62",
+      "trees.txt": "b62bc8c9fb40f5124f3c8d0947bc9ed660901b34ca391d96945ca746b01dc035"
+    },
+    "model_settings": {
+      "feature_version": "3",
+      "learner": "lightgbm",
+      "n_estimators": 200,
+      "num_leaves": 15,
+      "seed": 42
+    },
+    "phase": "validation_diagnostics",
+    "precision_status": "empirical; not an established precision guarantee",
+    "probability_quality": {
+      "average_precision": 0.6230626689136795,
+      "brier_score": 0.06334352878926644,
+      "probability_calibration": "sigmoid; reliability is measured, not assumed",
+      "reliability_bins": [
+        {
+          "count": 3225,
+          "lower": 0.0,
+          "mean_probability": 0.020865293724626977,
+          "positive_fraction": 0.020775193798449613,
+          "upper": 0.1
+        },
+        {
+          "count": 404,
+          "lower": 0.1,
+          "mean_probability": 0.1471096267757509,
+          "positive_fraction": 0.13366336633663367,
+          "upper": 0.2
+        },
+        {
+          "count": 231,
+          "lower": 0.2,
+          "mean_probability": 0.24586534653691783,
+          "positive_fraction": 0.2077922077922078,
+          "upper": 0.3
+        },
+        {
+          "count": 181,
+          "lower": 0.3,
+          "mean_probability": 0.351827920614889,
+          "positive_fraction": 0.32044198895027626,
+          "upper": 0.4
+        },
+        {
+          "count": 162,
+          "lower": 0.4,
+          "mean_probability": 0.44773141925583826,
+          "positive_fraction": 0.41358024691358025,
+          "upper": 0.5
+        },
+        {
+          "count": 123,
+          "lower": 0.5,
+          "mean_probability": 0.550027484452352,
+          "positive_fraction": 0.5609756097560976,
+          "upper": 0.6
+        },
+        {
+          "count": 77,
+          "lower": 0.6,
+          "mean_probability": 0.6468174214561841,
+          "positive_fraction": 0.6623376623376623,
+          "upper": 0.7
+        },
+        {
+          "count": 35,
+          "lower": 0.7,
+          "mean_probability": 0.7487396406090814,
+          "positive_fraction": 0.7714285714285715,
+          "upper": 0.8
+        },
+        {
+          "count": 45,
+          "lower": 0.8,
+          "mean_probability": 0.8561881074384977,
+          "positive_fraction": 0.9333333333333333,
+          "upper": 0.9
+        },
+        {
+          "count": 17,
+          "lower": 0.9,
+          "mean_probability": 0.9146860183607884,
+          "positive_fraction": 1.0,
+          "upper": 1.0
+        }
+      ]
+    },
+    "synthetic": false,
+    "test_opened": false,
+    "threshold_selected_on_reported_population": true,
+    "warning": "Full validation includes calibration and policy-selection data; not an independent performance estimate."
+  }
+}

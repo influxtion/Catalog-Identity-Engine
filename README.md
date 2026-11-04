@@ -86,6 +86,10 @@ Its precision envelopes are threshold-selection diagnostics, not precision guara
 Official large train/validation share all 500 entities despite disjoint offers; subsequent
 validation comparison is seen-entity development evidence. See the
 [registered experiment](experiments/matcher-v4-preregistration.md) for selection and stopping rules.
+The completed four-candidate screen retained the v3 control: v4 improved mean ranking AP
+but reduced recall at the 99% empirical precision envelope. All unsuccessful candidates
+and the unchanged 22-correct/zero-false validation replay are preserved in
+[the experiment results](experiments/README.md#train-only-entity-screening-of-matcher-v4).
 
 ## Run the local dashboard
 

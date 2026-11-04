@@ -1,5 +1,57 @@
 # Measured experiments
 
+## Train-only entity screening of matcher v4
+
+The [preregistered matrix](matcher-v4-preregistration.md) ran twelve fits from clean
+commit `5dac477`, using only the official large training file. All four outcomes are in
+[matcher-v4-screening.json](matcher-v4-screening.json). No validation or test file was
+opened or hashed during screening. This is a separate train-only selection procedure;
+it does not make earlier validation-guided feature design blind to the benchmark.
+
+Three deterministic seed-42 entity folds contain 197/148/155 assessment entities and
+5,558/3,336/3,531 assessment pairs, with 3,663/2,350/2,458 positives. Their corresponding
+training subsets contain 8,858/11,866/11,536 pairs. Boundary exclusions are
+5,419/4,633/4,768 pairs. Vocabularies and models fit outside each assessment entity set.
+Negative assessment weights are 3 and positive weights 1; raw results are also preserved.
+Training restrictions alter class balance, and the folds are not deployment samples.
+
+| Features / leaves / trees | Mean weighted AP | Mean recall at 99% weighted empirical precision | Folds improved over control at 99% |
+| --- | ---: | ---: | ---: |
+| v3 / 15 / 200, control | 0.91120 | 22.78% | — |
+| v4 / 15 / 200 | 0.91888 | 17.94% | 1 of 3 |
+| v3 / 31 / 400 | 0.90224 | 20.10% | 0 of 3 |
+| v4 / 31 / 400 | 0.91608 | 7.95% | 1 of 3 |
+
+All candidates qualified for supported envelopes in three folds, but **the fixed rule
+retained the v3 control**. The v4 additions improved mean ranking AP without improving
+high-precision recall. Version 4 remains an experimental implementation, not a promoted
+matcher. Five predictions only establishes diagnostic eligibility, not precision reliability.
+Each envelope selects its threshold on that same fold; no pooled raw scores or independent
+operating-policy claim is made. Per-fold raw/weighted counts, matched entity support, AP,
+95/98/99% envelopes, timing, effective parameters and source/data hashes are recorded.
+
+Selection was frozen in commit `e442ff0` before official validation. Since selected and
+control are identical, one full-train fit and one full-validation replay served both roles.
+[matcher-v4-validation.json](matcher-v4-validation.json) records **22 TP, 0 FP, 478 FN,
+4,000 TN**, 4.4% recall, AP 0.62306 and 22 matched positive entities at threshold
+0.8902757707668776. The policy subset recovered 13 positives with zero false positives.
+This reproduces the existing control; it is not a new matching-quality gain.
+
+The official train/validation audit reports zero shared listings and all 500 shared
+entities. This is **seen-entity development**, and full validation reuses calibration and
+threshold-selection data. Zero errors among 22 predictions does not establish 99%
+precision. No v4 validation fishing, test evaluation, model downloads, additional candidates,
+or default/production promotion followed this result. Raw pair evidence stays under ignored
+`runs/`; committed records contain aggregates only.
+
+```sh
+uv run catalog-identity screen-matchers --config configs/wdc-products-large.json --output runs/screening-reproduction
+uv run catalog-identity develop --config configs/wdc-products-large.json --feature-version 3 --learners lightgbm --num-leaves 15 --n-estimators 200 --output runs/selected-control-reproduction
+uv run catalog-identity validation-errors --config configs/wdc-products-large.json --model runs/selected-control-reproduction/lightgbm --output runs/selected-control-errors
+```
+
+On Windows, replace `uv run catalog-identity` with `.venv\Scripts\python -m catalog_identity.cli`.
+
 ## Original baseline
 
 The first real run used code commit `9b089f4f99d86bfc2709cb962488ae9be96e7e2a`, with a

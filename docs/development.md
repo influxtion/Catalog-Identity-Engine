@@ -36,6 +36,7 @@ and artifacts remain supported; v2 remains the CLI default.
 ```sh
 uv run catalog-identity screen-matchers --config configs/wdc-products-large.json --output runs/screening-reproduction
 # After selection, pass the selected feature version, num_leaves and n_estimators to develop.
+uv run catalog-identity develop --config configs/wdc-products-large.json --feature-version 3 --learners lightgbm --num-leaves 15 --n-estimators 200 --output runs/selected-reproduction
 ```
 
 Official large training and validation have disjoint listing IDs but share all 500 entities.
@@ -44,6 +45,8 @@ Official validation therefore measures seen-entity development. Reports now expo
 overlap explicitly without rejecting the benchmark's legitimate protocol. Full-validation
 replays reuse calibration and policy-selection observations and are not independent evidence.
 No new frozen test run or automatic production promotion is part of this experiment.
+The completed screen selected the existing v3 control; v4's mean ranking improvement did
+not translate into better high-precision recall. See [all measured outcomes](../experiments/README.md#train-only-entity-screening-of-matcher-v4).
 
 ## Features and learners
 
