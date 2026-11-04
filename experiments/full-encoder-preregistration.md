@@ -36,6 +36,14 @@ full fit/calibration/policy/replay <=20 minutes. Stop on failed gate, OOM, nonfi
 or deterministic execution errors. No smaller batch, shorter sequence, changed precision,
 epochs, seed or training schedule may rescue a failed gate.
 
+Pre-pilot measurement clarification: measure one complete TRAIN token-preparation pass
+directly. Reserve that measured pass for every fold, and scale its amortized per-pair
+cost for assessment/validation preparation. This avoids multiplying repeated per-listing
+parsing in the small sample by the full pair count. The sample remains the same for
+measured training/inference; include audit scalar synchronization and retain a 60-second
+per-fit audit/artifact reserve before the unchanged 1.5 safety factor. Earlier phase
+timing reports keep their original projection method.
+
 ## Training-only optimization audit
 
 For every fixed epoch record example-weighted training loss, actual optimizer steps,
@@ -62,6 +70,11 @@ zero-error supports do not establish independent performance or precision guaran
 
 If qualified, freeze selection before one full-training fit, the existing validation
 calibration/policy partitions and one complete seen-entity validation diagnostic replay.
+The operating-policy target is fixed at 0.99 with five minimum matches. The existing
+committed aggregate identifies validation SHA256
+`3f49df54a8d46c6b7dc59cd003e9f2021fab396af04a5e81c27b6e122b1eba6d`;
+carry this known hash through timing and screening without reading validation. Verify
+the actual validation input only at the conditional full-fit stage, before loading it.
 Otherwise stop, preserve the current matcher and publish the unmet accuracy goal. Test
 data is never loaded or hashed by this phase; any later evaluation requires a separately
 registered frozen-artifact protocol. No production/default/hierarchy promotion is automatic.

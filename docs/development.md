@@ -151,6 +151,22 @@ conditional full fitting, official validation or historical-test evaluation. See
 
 ## Earlier feature experiments
 
+The final [conventional full fine-tuning registration](../experiments/full-encoder-preregistration.md)
+adds a separate CLS-only matcher that trains all six layers and the embeddings. It uses
+no v3 numeric branch or fitted feature vocabulary. Earlier partial-freeze artifacts retain
+their original schema. Run its timing gate before any accuracy screening:
+
+```powershell
+.venv-gpu\Scripts\python -m catalog_identity.cli pilot-full --config configs/wdc-products-large.json --validation-report experiments/matcher-v4-validation.json --device cuda --output runs/full-encoder-timing-v1
+.venv-gpu\Scripts\python -m catalog_identity.cli screen-full --config configs/wdc-products-large.json --timing experiments/full-encoder-timing.json --control experiments/matcher-v4-screening.json --device cuda --output runs/full-encoder-screening-v1
+```
+
+Only a passing, frozen timing report authorizes the second command. The resource gates
+are 30 minutes for screening and 20 minutes for a conditional full fit. The fixed
+three-epoch training audit records loss, gradients, parameter changes, orientation and
+accumulation counts; none can choose a checkpoint. This final configuration comparison
+does not isolate the cause of earlier results. No further architecture search follows.
+
 Feature versions 5 and 6 are optional semantic experiments on unchanged v3, separately
 [preregistered after the negative v4 screen](../experiments/matcher-semantic-preregistration.md).
 Version 5 adds title/title, description/description and symmetric cross-field cosine

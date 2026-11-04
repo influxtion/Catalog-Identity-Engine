@@ -61,6 +61,18 @@ def main(argv: list[str] | None = None) -> int:
     joint_develop.add_argument("--output", type=Path, required=True)
     joint_develop.add_argument("--screening", type=Path, required=True)
     joint_develop.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
+    for action in ("pilot", "screen", "develop"):
+        command = commands.add_parser(f"{action}-full", help="Registered conventional full matcher")
+        command.add_argument("--config", type=Path, required=True)
+        command.add_argument("--output", type=Path, required=True)
+        command.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
+        if action == "pilot":
+            command.add_argument("--validation-report", type=Path, required=True)
+        elif action == "screen":
+            command.add_argument("--timing", type=Path, required=True)
+            command.add_argument("--control", type=Path, required=True)
+        else:
+            command.add_argument("--screening", type=Path, required=True)
     diagnostics = commands.add_parser(
         "validation-errors", help="Inspect saved matcher validation errors"
     )
@@ -103,6 +115,32 @@ def main(argv: list[str] | None = None) -> int:
     profiling.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command in ("pilot-full", "screen-full", "develop-full"):
+            from catalog_identity.evaluation import full_encoder
+
+            config = load_config(args.config)
+            if args.command == "pilot-full":
+                report = full_encoder.pilot(
+                    config, args.output, args.validation_report, args.device
+                )
+                result = {
+                    k: report[k]
+                    for k in (
+                        "gate_passed",
+                        "projected_screening_seconds",
+                        "projected_full_fit_validation_seconds",
+                    )
+                }
+            elif args.command == "screen-full":
+                report = full_encoder.screen(
+                    config, args.output, args.timing, args.control, args.device
+                )
+                result = {"selected_candidate": report["selected_candidate"]}
+            else:
+                report = full_encoder.develop(config, args.output, args.screening, args.device)
+                result = report["full_validation_classification"]
+            print(json.dumps(result, indent=2))
+            return 0
         if args.command == "develop-joint":
             from catalog_identity.evaluation.cross_encoder import develop_joint
 

@@ -1,7 +1,7 @@
 """Timing gate and fixed train-only screening for the registered joint matcher."""
 
 import json
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from time import perf_counter
 
@@ -40,6 +40,40 @@ JOINT_SOURCE_FILES = (
 )
 
 
+@dataclass(frozen=True)
+class JointProtocol:
+    architecture: dict
+    training: dict
+    matcher: type
+    screening_limit: int = 5400
+    full_fit_limit: int = 2700
+    allowed_microbatches: tuple = (4, 8)
+    source_files: tuple = JOINT_SOURCE_FILES
+    report_prefix: str = "joint_encoder"
+    measure_full_preparation: bool = False
+    freeze_validation_policy: bool = False
+
+
+ORIGINAL_PROTOCOL = JointProtocol(ARCHITECTURE, TRAINING, JointMatcher)
+
+
+def require_registered_validation_policy(config, policy, *, verify_input=False):
+    if (
+        config.target_precision != 0.99
+        or config.minimum_validation_matches != 5
+        or not isinstance(policy, dict)
+        or set(policy) != {"target_precision", "minimum_matches", "validation_sha256"}
+        or policy["target_precision"] != 0.99
+        or policy["minimum_matches"] != 5
+        or not isinstance(policy["validation_sha256"], str)
+        or len(policy["validation_sha256"]) != 64
+        or any(c not in "0123456789abcdef" for c in policy["validation_sha256"])
+    ):
+        raise ValueError("conditional validation policy differs from registration")
+    if verify_input and file_hash(config.validation) != policy["validation_sha256"]:
+        raise ValueError("conditional validation input differs from frozen aggregate")
+
+
 def subset(split, indices):
     pairs = tuple(split.pairs[i] for i in indices)
     keys = {key for pair in pairs for key in (pair.left, pair.right)}
@@ -64,9 +98,9 @@ def require_same_encoder(expected, actual):
         )
 
 
-def require_same_sources(previous):
+def require_same_sources(previous, source_files=JOINT_SOURCE_FILES):
     current = implementation_manifest()["source_sha256"]
-    if any(previous["source_sha256"].get(path) != current[path] for path in JOINT_SOURCE_FILES):
+    if any(previous["source_sha256"].get(path) != current[path] for path in source_files):
         raise ValueError("joint model/evaluation implementation changed after timing or selection")
 
 
@@ -80,7 +114,7 @@ def save_joint_policy(directory, report):
         "identity_level": "benchmark_entity",
         "development_only": True,
         "development_overlap": report["development_overlap"],
-        "model_kind": "joint-minilm-v1",
+        "model_kind": report.get("architecture", ARCHITECTURE)["version"],
         "execution": report["execution"],
         "selection_frozen_sha256": report["selection_frozen_sha256"],
         "implementation": report["implementation"],
@@ -93,9 +127,10 @@ def pilot(
     config,
     output: Path,
     validation_report: Path,
-    matcher_factory=JointMatcher,
+    matcher_factory=None,
     microbatch=8,
     device="cpu",
+    protocol=ORIGINAL_PROTOCOL,
 ):
     """Uses real training text but synthetic compute-only labels, never accuracy."""
     import psutil
@@ -103,13 +138,21 @@ def pilot(
 
     if output.exists():
         raise ValueError("output already exists")
-    if config.seed != 42 or microbatch not in (4, 8):
+    if config.seed != 42 or microbatch not in protocol.allowed_microbatches:
         raise ValueError("registered timing settings differ")
     train = load_wdc_pairs(config.train, "train")
     folds = entity_folds(train)
     prior_validation = json.loads(validation_report.read_text(encoding="utf-8"))
     if prior_validation["development"]["inputs"]["train"] != file_hash(config.train):
         raise ValueError("validation aggregate belongs to different training input")
+    validation_policy = None
+    if protocol.freeze_validation_policy:
+        validation_policy = {
+            "target_precision": 0.99,
+            "minimum_matches": 5,
+            "validation_sha256": prior_validation["development"]["inputs"]["validation"],
+        }
+        require_registered_validation_policy(config, validation_policy)
     validation_counts = {
         "calibration": prior_validation["development"]["calibration_pairs"],
         "policy": prior_validation["development"]["policy_pairs"],
@@ -119,7 +162,7 @@ def pilot(
         raise ValueError("prior validation aggregate has invalid pair counts")
     output.mkdir(parents=True)
     started = perf_counter()
-    model = matcher_factory(device=device)
+    model = (matcher_factory or protocol.matcher)(device=device)
 
     def synchronize():
         if model.device == "cuda:0":
@@ -145,6 +188,14 @@ def pilot(
     indices = ordered[np.linspace(0, len(ordered) - 1, sample_size, dtype=int)]
     sample = subset(train, indices)
     started = perf_counter()
+    full_prepare_seconds = None
+    full_prepare_statistics = None
+    if protocol.measure_full_preparation:
+        full_prepared = model.prepare(train, numeric)
+        full_prepare_seconds = perf_counter() - started
+        full_prepare_statistics = full_prepared["statistics"]
+        del full_prepared
+        started = perf_counter()
     prepared = model.prepare(sample, numeric[indices])
     prepared["labels"] = (np.arange(len(indices)) % 2).astype(np.float32)
     sample_prepare_seconds = perf_counter() - started
@@ -168,8 +219,18 @@ def pilot(
         if not torch.isfinite(loss):
             raise ValueError("nonfinite timing-pilot loss; execution stopped")
         loss.backward()
+        if protocol.measure_full_preparation:
+            float(loss.detach())  # Include training-audit scalar synchronization in timing.
         if (batch_index + 1) % accumulation == 0:
-            torch.nn.utils.clip_grad_norm_(model.network.parameters(), 1.0, error_if_nonfinite=True)
+            if protocol.measure_full_preparation and any(
+                p.grad is None for p in model.network.parameters()
+            ):
+                raise ValueError("intended trainable pilot parameter has no gradient")
+            norm = torch.nn.utils.clip_grad_norm_(
+                model.network.parameters(), 1.0, error_if_nonfinite=True
+            )
+            if protocol.measure_full_preparation:
+                float(norm)
             optimizer.step()
             optimizer.zero_grad(set_to_none=True)
         synchronize()
@@ -190,6 +251,8 @@ def pilot(
     # Full numeric feature fitting was measured. Reserve an additional full preparation
     # pass per fold and a conservative 60 seconds for metadata/artifact serialization.
     per_pair_prepare = sample_prepare_seconds / len(indices)
+    if full_prepare_seconds is not None:
+        per_pair_prepare = full_prepare_seconds / len(train.pairs)
     per_fit_overhead = load_seconds + feature_fit_seconds + per_pair_prepare * len(train.pairs) + 60
     screening = sum(
         projected_cost(
@@ -215,7 +278,7 @@ def pilot(
         + feature_fit_seconds * validation_pass_pairs / len(train.pairs),
     )
     report = {
-        "phase": "joint_encoder_timing_only",
+        "phase": protocol.report_prefix + "_timing_only",
         "accuracy_inspected": False,
         "synthetic_labels_for_compute_only": True,
         "pilot_model_saved": False,
@@ -230,8 +293,8 @@ def pilot(
         "test_opened": False,
         "inputs": {"train": file_hash(config.train)},
         "implementation": implementation_manifest(),
-        "architecture": ARCHITECTURE,
-        "training": {**TRAINING, "microbatch": microbatch, "accumulation": accumulation},
+        "architecture": protocol.architecture,
+        "training": {**protocol.training, "microbatch": microbatch, "accumulation": accumulation},
         "encoder": model.encoder_metadata,
         "execution": model.execution,
         "gpu_memory": None
@@ -255,6 +318,12 @@ def pilot(
         "model_load_seconds": load_seconds,
         "full_numeric_feature_fit_seconds": feature_fit_seconds,
         "sample_tokenization_seconds": sample_prepare_seconds,
+        "full_training_tokenization_seconds": full_prepare_seconds,
+        "full_training_token_statistics": full_prepare_statistics,
+        "preparation_projection": "measured_full_training_pass"
+        if protocol.measure_full_preparation
+        else "sample_scaled_by_pairs",
+        "audit_and_serialization_reserve_seconds_per_fit": 60,
         "per_fit_overhead_reserved_seconds": per_fit_overhead,
         "torch_threads": torch.get_num_threads(),
         "torch_interop_threads": torch.get_num_interop_threads(),
@@ -266,11 +335,12 @@ def pilot(
         ],
         "conditional_validation_pair_counts_from_prior_aggregate": validation_counts,
         "prior_validation_aggregate_sha256": file_hash(validation_report),
+        "conditional_validation_policy": validation_policy,
         "projected_screening_seconds": screening,
         "projected_full_fit_validation_seconds": full,
-        "screening_limit_seconds": 5400,
-        "full_fit_limit_seconds": 2700,
-        "gate_passed": screening <= 5400 and full <= 2700,
+        "screening_limit_seconds": protocol.screening_limit,
+        "full_fit_limit_seconds": protocol.full_fit_limit,
+        "gate_passed": screening <= protocol.screening_limit and full <= protocol.full_fit_limit,
         "warning": "Timing projection only; no accuracy metric or claim. Pilot weights discarded. "
         "If gate fails, stop without changing architecture, epochs, length or data.",
     }
@@ -311,7 +381,14 @@ def verify_control(config, control):
     return candidate
 
 
-def screen_joint(config, output: Path, timing_path: Path, control_path: Path, device="cpu"):
+def screen_joint(
+    config,
+    output: Path,
+    timing_path: Path,
+    control_path: Path,
+    device="cpu",
+    protocol=ORIGINAL_PROTOCOL,
+):
     if output.exists():
         raise ValueError("output already exists")
     timing = json.loads(timing_path.read_text(encoding="utf-8"))
@@ -321,25 +398,35 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path, de
     require_same_execution(timing["execution"], execution)
     if not timing["gate_passed"] or timing["inputs"]["train"] != file_hash(config.train):
         raise ValueError("a passing timing gate for the same training input is required")
-    if timing["architecture"] != ARCHITECTURE:
+    if timing["architecture"] != protocol.architecture:
         raise ValueError("architecture differs from timing gate")
     if config.seed != 42 or timing["seed"] != 42:
         raise ValueError("registered seed differs from timing gate")
-    if timing["training"]["microbatch"] not in (4, 8):
+    if timing["training"]["microbatch"] not in protocol.allowed_microbatches:
         raise ValueError("unregistered microbatch in timing gate")
     expected_training = {
-        **TRAINING,
+        **protocol.training,
         "microbatch": timing["training"]["microbatch"],
         "accumulation": 32 // timing["training"]["microbatch"],
     }
-    if timing["training"] != expected_training or timing["training"]["microbatch"] not in (4, 8):
+    if (
+        timing["training"] != expected_training
+        or timing["training"]["microbatch"] not in protocol.allowed_microbatches
+    ):
         raise ValueError("training constants differ from timing gate")
     if (
-        timing["projected_screening_seconds"] > 5400
-        or timing["projected_full_fit_validation_seconds"] > 2700
+        timing["projected_screening_seconds"] > protocol.screening_limit
+        or timing["projected_full_fit_validation_seconds"] > protocol.full_fit_limit
     ):
         raise ValueError("timing projections exceed registered limits")
-    require_same_sources(timing["implementation"])
+    if (
+        timing.get("screening_limit_seconds") != protocol.screening_limit
+        or timing.get("full_fit_limit_seconds") != protocol.full_fit_limit
+    ):
+        raise ValueError("timing resource limits differ from registered protocol")
+    require_same_sources(timing["implementation"], protocol.source_files)
+    if protocol.freeze_validation_policy:
+        require_registered_validation_policy(config, timing.get("conditional_validation_policy"))
     control_report = json.loads(control_path.read_text(encoding="utf-8"))
     control = verify_control(config, control_report)
     train = load_wdc_pairs(config.train, "train")
@@ -352,9 +439,9 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path, de
         ):
             raise ValueError("control fold definition differs")
     output.mkdir(parents=True)
-    candidate = {"name": "joint-minilm-v1", "folds": []}
+    candidate = {"name": protocol.architecture["version"], "folds": []}
     report = {
-        "phase": "joint_encoder_train_only_screening",
+        "phase": protocol.report_prefix + "_train_only_screening",
         "complete": False,
         "development_only": True,
         "synthetic": config.synthetic,
@@ -367,11 +454,12 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path, de
         "test_opened": False,
         "inputs": {"train": file_hash(config.train)},
         "implementation": implementation_manifest(),
-        "architecture": ARCHITECTURE,
-        "training": TRAINING,
+        "architecture": protocol.architecture,
+        "training": protocol.training,
         "execution": execution,
         "encoder": timing["encoder"],
         "timing_sha256": file_hash(timing_path),
+        "conditional_validation_policy": timing.get("conditional_validation_policy"),
         "control_sha256": file_hash(control_path),
         "control_source_commit": control_report["implementation"]["git"],
         "warning": "Reused development folds; within-fold precision envelopes are optimistic "
@@ -382,10 +470,8 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path, de
     started_run = last_update
 
     def check_deadline():
-        if perf_counter() - started_run > 5400:
-            raise RuntimeError(
-                "registered 90-minute screening resource limit exceeded; incomplete run"
-            )
+        if perf_counter() - started_run > protocol.screening_limit:
+            raise RuntimeError("registered screening resource limit exceeded; incomplete run")
 
     def progress(epoch, batch, total):
         nonlocal last_update
@@ -397,7 +483,7 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path, de
 
     for index, (fit, assess, excluded) in enumerate(folds):
         started = perf_counter()
-        model = JointMatcher(device=device)  # Fresh immutable backbone for every fold.
+        model = protocol.matcher(device=device)  # Fresh immutable backbone for every fold.
         require_same_execution(execution, model.execution)
         require_same_encoder(timing["encoder"], model.encoder_metadata)
         numeric = model.fit_features(fit)
@@ -456,18 +542,30 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path, de
     return report
 
 
-def develop_joint(config, output: Path, screening_path: Path, device="cpu"):
+def develop_joint(
+    config, output: Path, screening_path: Path, device="cpu", protocol=ORIGINAL_PROTOCOL
+):
     """One conditional full-train fit and one validation replay; never opens test."""
     if output.exists():
         raise ValueError("output already exists")
     screening = json.loads(screening_path.read_text(encoding="utf-8"))
-    if not screening.get("complete") or screening.get("selected_candidate") != "joint-minilm-v1":
+    if (
+        not screening.get("complete")
+        or screening.get("selected_candidate") != protocol.architecture["version"]
+    ):
         raise ValueError("completed qualifying joint-model screening is required")
     if screening["inputs"]["train"] != file_hash(config.train) or config.seed != 42:
         raise ValueError("training input/seed differs from frozen selection")
-    if screening["architecture"] != ARCHITECTURE or screening["training"] != TRAINING:
+    if (
+        screening["architecture"] != protocol.architecture
+        or screening["training"] != protocol.training
+    ):
         raise ValueError("joint configuration differs from frozen selection")
-    require_same_sources(screening["implementation"])
+    require_same_sources(screening["implementation"], protocol.source_files)
+    if protocol.freeze_validation_policy:
+        require_registered_validation_policy(
+            config, screening.get("conditional_validation_policy"), verify_input=True
+        )
     if "execution" not in screening:
         raise ValueError("screening lacks execution fingerprint")
     execution = configure_execution(device)
@@ -476,7 +574,7 @@ def develop_joint(config, output: Path, screening_path: Path, device="cpu"):
     last_update = started
 
     def deadline():
-        if perf_counter() - started > 2700:
+        if perf_counter() - started > protocol.full_fit_limit:
             raise RuntimeError("registered full-fit/validation resource limit exceeded")
 
     def progress(epoch, batch, total):
@@ -490,7 +588,7 @@ def develop_joint(config, output: Path, screening_path: Path, device="cpu"):
     validation = load_wdc_pairs(config.validation, "validation")
     overlap = development_overlap(train, validation)
     calibration, policy = validation_partitions(validation, 42)
-    model = JointMatcher(device=device)
+    model = protocol.matcher(device=device)
     require_same_execution(execution, model.execution)
     require_same_encoder(screening["encoder"], model.encoder_metadata)
     microbatch = screening["candidates"][1]["folds"][0]["training_record"]["microbatch"]
@@ -538,7 +636,7 @@ def develop_joint(config, output: Path, screening_path: Path, device="cpu"):
     predicted = replay >= match.threshold if match.threshold is not None else np.zeros(len(y), bool)
     deadline()
     report = {
-        "phase": "joint_encoder_selected_validation",
+        "phase": protocol.report_prefix + "_selected_validation",
         "development_only": True,
         "test_opened": False,
         "synthetic": config.synthetic,
@@ -549,7 +647,7 @@ def develop_joint(config, output: Path, screening_path: Path, device="cpu"):
         "selection_frozen_sha256": file_hash(screening_path),
         "inputs": {"train": file_hash(config.train), "validation": file_hash(config.validation)},
         "implementation": implementation_manifest(),
-        "architecture": ARCHITECTURE,
+        "architecture": protocol.architecture,
         "training": model.training_record,
         "encoder": model.encoder_metadata,
         "execution": execution,
