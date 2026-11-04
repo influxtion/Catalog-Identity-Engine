@@ -45,6 +45,7 @@ def main(argv: list[str] | None = None) -> int:
     joint_pilot.add_argument("--config", type=Path, required=True)
     joint_pilot.add_argument("--output", type=Path, required=True)
     joint_pilot.add_argument("--validation-report", type=Path, required=True)
+    joint_pilot.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     joint_screen = commands.add_parser(
         "screen-joint", help="Gated train-only supervised matcher screening"
     )
@@ -52,12 +53,14 @@ def main(argv: list[str] | None = None) -> int:
     joint_screen.add_argument("--output", type=Path, required=True)
     joint_screen.add_argument("--timing", type=Path, required=True)
     joint_screen.add_argument("--control", type=Path, required=True)
+    joint_screen.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     joint_develop = commands.add_parser(
         "develop-joint", help="Validate a qualifying joint matcher once"
     )
     joint_develop.add_argument("--config", type=Path, required=True)
     joint_develop.add_argument("--output", type=Path, required=True)
     joint_develop.add_argument("--screening", type=Path, required=True)
+    joint_develop.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     diagnostics = commands.add_parser(
         "validation-errors", help="Inspect saved matcher validation errors"
     )
@@ -103,13 +106,17 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "develop-joint":
             from catalog_identity.evaluation.cross_encoder import develop_joint
 
-            report = develop_joint(load_config(args.config), args.output, args.screening)
+            report = develop_joint(
+                load_config(args.config), args.output, args.screening, args.device
+            )
             print(json.dumps(report["full_validation_classification"], indent=2))
             return 0
         if args.command == "pilot-joint":
             from catalog_identity.evaluation.cross_encoder import pilot
 
-            report = pilot(load_config(args.config), args.output, args.validation_report)
+            report = pilot(
+                load_config(args.config), args.output, args.validation_report, device=args.device
+            )
             print(
                 json.dumps(
                     {
@@ -127,7 +134,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "screen-joint":
             from catalog_identity.evaluation.cross_encoder import screen_joint
 
-            report = screen_joint(load_config(args.config), args.output, args.timing, args.control)
+            report = screen_joint(
+                load_config(args.config), args.output, args.timing, args.control, args.device
+            )
             print(json.dumps({"selected_candidate": report["selected_candidate"]}, indent=2))
             return 0
         if args.command == "screen-semantic":

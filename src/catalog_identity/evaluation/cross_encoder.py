@@ -19,6 +19,7 @@ from catalog_identity.ingestion.audit import development_overlap
 from catalog_identity.ingestion.loaders import BenchmarkSplit, load_wdc_pairs
 from catalog_identity.matching.baseline import select_match_threshold
 from catalog_identity.matching.cross_encoder import ARCHITECTURE, TRAINING, JointMatcher
+from catalog_identity.matching.execution import configure_execution, require_same_execution
 
 
 def subset(split, indices):
@@ -39,7 +40,12 @@ def projected_cost(train_count, assessment_count, train_rate, inference_rate, ov
 
 
 def pilot(
-    config, output: Path, validation_report: Path, matcher_factory=JointMatcher, microbatch=8
+    config,
+    output: Path,
+    validation_report: Path,
+    matcher_factory=JointMatcher,
+    microbatch=8,
+    device="cpu",
 ):
     """Uses real training text but synthetic compute-only labels, never accuracy."""
     import psutil
@@ -63,7 +69,13 @@ def pilot(
         raise ValueError("prior validation aggregate has invalid pair counts")
     output.mkdir(parents=True)
     started = perf_counter()
-    model = matcher_factory()
+    model = matcher_factory(device=device)
+
+    def synchronize():
+        if model.device == "cuda:0":
+            torch.cuda.synchronize(0)
+
+    gpu_initial_memory = torch.cuda.mem_get_info(0) if model.device == "cuda:0" else None
     load_seconds = perf_counter() - started
     started = perf_counter()
     numeric = model.fit_features(train)
@@ -94,26 +106,33 @@ def pilot(
     optimizer.zero_grad(set_to_none=True)
     for batch_index in range(20):
         batch = np.arange(batch_index * microbatch, (batch_index + 1) * microbatch) % len(indices)
-        tokens, values = model.batch(prepared, batch, batch_index % 2)
+        synchronize()
         started = perf_counter()
+        tokens, values = model.batch(prepared, batch, batch_index % 2)
+        synthetic_labels = torch.from_numpy(prepared["labels"][batch]).to(model.device)
         logits = model.network(tokens, values)
         loss = (
-            torch.nn.functional.binary_cross_entropy_with_logits(
-                logits, torch.from_numpy(prepared["labels"][batch])
-            )
+            torch.nn.functional.binary_cross_entropy_with_logits(logits, synthetic_labels)
             / accumulation
         )
+        if not torch.isfinite(loss):
+            raise ValueError("nonfinite timing-pilot loss; execution stopped")
         loss.backward()
         if (batch_index + 1) % accumulation == 0:
-            torch.nn.utils.clip_grad_norm_(model.network.parameters(), 1.0)
+            torch.nn.utils.clip_grad_norm_(model.network.parameters(), 1.0, error_if_nonfinite=True)
             optimizer.step()
             optimizer.zero_grad(set_to_none=True)
+        synchronize()
         elapsed = perf_counter() - started
+        if batch_index == 3 and model.device == "cuda:0":
+            torch.cuda.reset_peak_memory_stats(0)
         if batch_index >= 4:
             timings.append(elapsed)
         rss.append(psutil.Process().memory_info().rss)
+    synchronize()
     started = perf_counter()
     model.logits_prepared(prepared, microbatch)
+    synchronize()
     inference_seconds = perf_counter() - started
     rss.append(psutil.Process().memory_info().rss)
     train_rate = 16 * microbatch / sum(timings)
@@ -164,6 +183,15 @@ def pilot(
         "architecture": ARCHITECTURE,
         "training": {**TRAINING, "microbatch": microbatch, "accumulation": accumulation},
         "encoder": model.encoder_metadata,
+        "execution": model.execution,
+        "gpu_memory": None
+        if gpu_initial_memory is None
+        else {
+            "free_after_model_load_bytes": gpu_initial_memory[0],
+            "total_bytes": gpu_initial_memory[1],
+            "peak_allocated_after_warmup_bytes": torch.cuda.max_memory_allocated(0),
+            "peak_reserved_after_warmup_bytes": torch.cuda.max_memory_reserved(0),
+        },
         "sample_pairs": len(indices),
         "sample_selection": "even quantiles of combined title/description character length",
         "token_statistics": prepared["statistics"],
@@ -197,7 +225,6 @@ def pilot(
         "If gate fails, stop without changing architecture, epochs, length or data.",
     }
     write_json(output / "timing.json", report)
-    del model, optimizer
     return report
 
 
@@ -234,10 +261,14 @@ def verify_control(config, control):
     return candidate
 
 
-def screen_joint(config, output: Path, timing_path: Path, control_path: Path):
+def screen_joint(config, output: Path, timing_path: Path, control_path: Path, device="cpu"):
     if output.exists():
         raise ValueError("output already exists")
     timing = json.loads(timing_path.read_text(encoding="utf-8"))
+    if "execution" not in timing:
+        raise ValueError("timing gate lacks an execution fingerprint; a new pilot is required")
+    execution = configure_execution(device)
+    require_same_execution(timing["execution"], execution)
     if not timing["gate_passed"] or timing["inputs"]["train"] != file_hash(config.train):
         raise ValueError("a passing timing gate for the same training input is required")
     if timing["architecture"] != ARCHITECTURE:
@@ -259,7 +290,11 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path):
     ):
         raise ValueError("timing projections exceed registered limits")
     current_sources = implementation_manifest()["source_sha256"]
-    for path in ("matching/cross_encoder.py", "evaluation/cross_encoder.py"):
+    for path in (
+        "matching/cross_encoder.py",
+        "matching/execution.py",
+        "evaluation/cross_encoder.py",
+    ):
         if timing["implementation"]["source_sha256"][path] != current_sources[path]:
             raise ValueError("joint implementation changed after timing gate")
     control_report = json.loads(control_path.read_text(encoding="utf-8"))
@@ -291,6 +326,7 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path):
         "implementation": implementation_manifest(),
         "architecture": ARCHITECTURE,
         "training": TRAINING,
+        "execution": execution,
         "timing_sha256": file_hash(timing_path),
         "control_sha256": file_hash(control_path),
         "control_source_commit": control_report["implementation"]["git"],
@@ -317,7 +353,8 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path):
 
     for index, (fit, assess, excluded) in enumerate(folds):
         started = perf_counter()
-        model = JointMatcher()  # Fresh immutable backbone for every fold; pilot is never reused.
+        model = JointMatcher(device=device)  # Fresh immutable backbone for every fold.
+        require_same_execution(execution, model.execution)
         numeric = model.fit_features(fit)
         prepared = model.prepare(fit, numeric)
         check_deadline()
@@ -374,7 +411,7 @@ def screen_joint(config, output: Path, timing_path: Path, control_path: Path):
     return report
 
 
-def develop_joint(config, output: Path, screening_path: Path):
+def develop_joint(config, output: Path, screening_path: Path, device="cpu"):
     """One conditional full-train fit and one validation replay; never opens test."""
     if output.exists():
         raise ValueError("output already exists")
@@ -385,6 +422,10 @@ def develop_joint(config, output: Path, screening_path: Path):
         raise ValueError("training input/seed differs from frozen selection")
     if screening["architecture"] != ARCHITECTURE or screening["training"] != TRAINING:
         raise ValueError("joint configuration differs from frozen selection")
+    if "execution" not in screening:
+        raise ValueError("screening lacks execution fingerprint")
+    execution = configure_execution(device)
+    require_same_execution(screening["execution"], execution)
     started = perf_counter()
     last_update = started
 
@@ -403,7 +444,8 @@ def develop_joint(config, output: Path, screening_path: Path):
     validation = load_wdc_pairs(config.validation, "validation")
     overlap = development_overlap(train, validation)
     calibration, policy = validation_partitions(validation, 42)
-    model = JointMatcher()
+    model = JointMatcher(device=device)
+    require_same_execution(execution, model.execution)
     microbatch = screening["candidates"][1]["folds"][0]["training_record"]["microbatch"]
     numeric = model.fit_features(train)
     prepared = model.prepare(train, numeric)
@@ -463,6 +505,7 @@ def develop_joint(config, output: Path, screening_path: Path):
         "architecture": ARCHITECTURE,
         "training": model.training_record,
         "encoder": model.encoder_metadata,
+        "execution": execution,
         "development_overlap": overlap,
         "training_token_statistics": train_statistics,
         "calibration_pairs": len(calibration.pairs),

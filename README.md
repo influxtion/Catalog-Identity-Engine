@@ -112,6 +112,9 @@ The measured gate projected 167.9 minutes for screening and 100.8 minutes for co
 full fitting/validation, exceeding its 90/45-minute budgets. It stopped before accuracy
 training; [the timing evidence](experiments/README.md#supervised-joint-text-model-phase-3-resource-gate)
 is published without a new accuracy claim.
+The machine's physical NVIDIA GPU was subsequently identified. A separately registered
+[execution-only GPU addendum](experiments/cross-encoder-gpu-execution-addendum.md) preserves
+the exact model and training protocol, using an isolated CUDA runtime and a new timing gate.
 
 ## Run the local dashboard
 

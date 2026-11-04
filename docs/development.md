@@ -98,6 +98,37 @@ No pickle or original-cache dependency is needed to reload a saved artifact. Inp
 provenance accompanies actual selected-model artifacts. Optional runtime tests skip when
 PyTorch/Transformers are absent; pure token-budget and existing model tests remain available.
 
+## Execution-only GPU addendum
+
+The original CPU-only Torch environment did not expose the machine's physical RTX 4060
+Laptop GPU. Its failed timing report remains published. The separately registered
+[GPU execution addendum](../experiments/cross-encoder-gpu-execution-addendum.md) uses the
+same architecture, training schedule and selection rule in isolated `.venv-gpu`; only the
+Torch wheel differs from the original environment's pinned package versions. No drivers,
+global Python settings or model assets are changed. GPU runtime installation is separate
+from model-weight downloads, which remain disabled.
+
+Explicit `--device cuda` enables this path; CPU remains the default. The execution manifest
+records exact dependencies/hardware, IEEE float32 precision, deterministic algorithms,
+MATH attention, autocast off, and non-fused/non-foreach AdamW. It is fingerprinted and must
+match the timing gate, screening and conditional full fit. CUDA intervals synchronize around
+training and symmetric inference, include transfers, and report allocated/reserved GPU peaks
+after warmup separately from CPU RSS. CUDA failures do not silently switch execution modes.
+
+```powershell
+# Existing runtime preparation records exact pins and official wheel hashes under ignored runs/.
+.venv-gpu\Scripts\python -m catalog_identity.cli pilot-joint --config configs/wdc-products-large.json --validation-report experiments/matcher-v4-validation.json --device cuda --output runs/joint-gpu-timing
+# Only after the new GPU gate passes:
+.venv-gpu\Scripts\python -m catalog_identity.cli screen-joint --config configs/wdc-products-large.json --timing runs/joint-gpu-timing/timing.json --control experiments/matcher-v4-screening.json --device cuda --output runs/joint-gpu-screening
+```
+
+New model artifacts preserve training execution metadata but still load on CPU by default.
+Legacy artifacts without execution flags remain loadable without inventing their history.
+CPU/CUDA results need not be bitwise equal; the fictional interoperability smoke uses a
+declared 1e-5 float32 tolerance. The [official Torch CUDA precision documentation](https://docs.pytorch.org/docs/2.15/notes/cuda.html)
+requires using the new precision API without mixing legacy TF32 setters; runtime flags
+follow that guidance. The wheel comes from the [official CUDA 13.2 index](https://download.pytorch.org/whl/cu132/torch/).
+
 ## Earlier feature experiments
 
 Feature versions 5 and 6 are optional semantic experiments on unchanged v3, separately

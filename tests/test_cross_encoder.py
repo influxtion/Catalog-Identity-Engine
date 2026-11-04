@@ -45,7 +45,7 @@ class FakeTokenizer:
         (Path(path) / "tokenizer.json").write_text(json.dumps(self.vocabulary))
 
 
-def tiny_matcher(tokenizer=None):
+def tiny_matcher(tokenizer=None, device="cpu"):
     torch = pytest.importorskip("torch")
     transformers = pytest.importorskip("transformers")
     torch.manual_seed(42)
@@ -58,7 +58,10 @@ def tiny_matcher(tokenizer=None):
         max_position_embeddings=256,
     )
     return JointMatcher(
-        transformers.BertModel(config), tokenizer or FakeTokenizer(), {"fictional": True}
+        transformers.BertModel(config),
+        tokenizer or FakeTokenizer(),
+        {"fictional": True},
+        device=device,
     )
 
 
@@ -137,6 +140,27 @@ def test_train_only_scaler_frozen_modules_symmetry_and_safe_roundtrip(tmp_path):
     np.testing.assert_allclose(scores, restored.predict(small), atol=1e-8)
     metadata_path = tmp_path / "model/matcher.json"
     metadata = json.loads(metadata_path.read_text())
+    legacy = dict(metadata)
+    legacy.pop("execution")
+    metadata_path.write_text(json.dumps(legacy))
+    legacy_model = JointMatcher.load(
+        tmp_path / "model",
+        fresh.network.backbone,
+        fresh.tokenizer.tokenizer,
+        fresh.encoder_metadata,
+    )
+    assert legacy_model.device == "cpu" and legacy_model.training_execution is None
+    np.testing.assert_allclose(scores, legacy_model.predict(small), atol=1e-8)
+    malformed = json.loads(json.dumps(metadata))
+    malformed["execution"]["deterministic_algorithms"] = False
+    metadata_path.write_text(json.dumps(malformed))
+    with pytest.raises(ValueError, match="execution"):
+        JointMatcher.load(
+            tmp_path / "model",
+            fresh.network.backbone,
+            fresh.tokenizer.tokenizer,
+            fresh.encoder_metadata,
+        )
     metadata["architecture"]["head_hidden"] = 64
     metadata_path.write_text(json.dumps(metadata))
     with pytest.raises(ValueError, match="architecture"):
@@ -244,6 +268,19 @@ def test_timing_gate_uses_synthetic_labels_and_never_needs_other_data(tmp_path, 
     assert projected_cost(10, 20, 2, 4, 5) == 37.5
     # A failed resource gate stops before attempting a model fit or opening control/data.
     record = json.loads((tmp_path / "pilot/timing.json").read_text())
+    from catalog_identity.matching.execution import fingerprint
+
+    changed = json.loads(json.dumps(record))
+    changed["execution"]["dependencies"]["fictional-runtime-change"] = "1"
+    changed["execution"]["fingerprint"] = fingerprint(changed["execution"])
+    (tmp_path / "pilot/timing.json").write_text(json.dumps(changed))
+    with pytest.raises(ValueError, match="execution environment"):
+        screen_joint(
+            config,
+            tmp_path / "mismatch",
+            tmp_path / "pilot/timing.json",
+            tmp_path / "absent-control",
+        )
     record["gate_passed"] = False
     (tmp_path / "pilot/timing.json").write_text(json.dumps(record))
     with pytest.raises(ValueError, match="passing timing gate"):
@@ -253,3 +290,77 @@ def test_timing_gate_uses_synthetic_labels_and_never_needs_other_data(tmp_path, 
             tmp_path / "pilot/timing.json",
             tmp_path / "absent-control",
         )
+
+
+def test_execution_manifest_strictness_and_no_automatic_cuda_fallback(monkeypatch):
+    torch = pytest.importorskip("torch")
+    from catalog_identity.matching.execution import (
+        configure_execution,
+        fingerprint,
+        require_same_execution,
+        validate_execution,
+    )
+
+    manifest = configure_execution("cpu")
+    assert manifest["precision"] == {"global": "ieee", "cuda_matmul": "ieee", "cudnn": "ieee"}
+    assert manifest["attention"] == "math" and manifest["autocast"] is False
+    changed = json.loads(json.dumps(manifest))
+    changed["python"] = "different-runtime"
+    changed["fingerprint"] = fingerprint(changed)
+    with pytest.raises(ValueError, match="environment"):
+        require_same_execution(manifest, changed)
+    changed["optimizer"]["fused"] = True
+    changed["fingerprint"] = fingerprint(changed)
+    with pytest.raises(ValueError, match="flags"):
+        validate_execution(changed)
+    import os
+
+    monkeypatch.setenv("CUBLAS_WORKSPACE_CONFIG", "wrong-prior-setting")
+    monkeypatch.setattr(torch.cuda, "is_initialized", lambda: True)
+    with pytest.raises(ValueError, match="initialized"):
+        configure_execution("cpu")
+    assert os.environ["CUBLAS_WORKSPACE_CONFIG"] == "wrong-prior-setting"
+    monkeypatch.setattr(torch.cuda, "is_initialized", lambda: False)
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    with pytest.raises(ValueError, match="unavailable"):
+        configure_execution("cuda")
+
+
+def test_cuda_routing_roundtrip_and_default_cpu_loading(tmp_path, monkeypatch):
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("transformers")
+    pytest.importorskip("safetensors")
+    monkeypatch.setenv("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    if not torch.cuda.is_available():
+        pytest.skip("CUDA runtime/device unavailable")
+    paths = write_synthetic(tmp_path / "fixture")
+    train = load_wdc_pairs(paths["train"], "train")
+    small = BenchmarkSplit("train", train.listings, train.pairs[:8], train.entity_ids)
+    model = tiny_matcher(device="cuda")
+    numeric = model.fit_features(small)
+    prepared = model.prepare(small, numeric)
+    tokens, numeric_tensor = model.batch(prepared, np.arange(8), 0)
+    assert tokens["input_ids"].device.type == numeric_tensor.device.type == "cuda"
+    model.train_prepared(prepared)
+    expected = model.predict(small)
+    model.save(tmp_path / "model")
+    fresh = tiny_matcher(model.tokenizer.tokenizer)
+    gpu = JointMatcher.load(
+        tmp_path / "model",
+        fresh.network.backbone,
+        fresh.tokenizer.tokenizer,
+        fresh.encoder_metadata,
+        device="cuda",
+    )
+    np.testing.assert_allclose(expected, gpu.predict(small), atol=1e-5, rtol=1e-5)
+    cpu_fresh = tiny_matcher(model.tokenizer.tokenizer)
+    cpu = JointMatcher.load(
+        tmp_path / "model",
+        cpu_fresh.network.backbone,
+        cpu_fresh.tokenizer.tokenizer,
+        cpu_fresh.encoder_metadata,
+    )
+    assert cpu.device == "cpu" and cpu.training_execution["device"] == "cuda:0"
+    actual = cpu.predict(small)
+    assert np.isfinite(actual).all()
+    np.testing.assert_allclose(expected, actual, atol=1e-5, rtol=1e-5)

@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 from catalog_identity.matching.distinctions import DISTINCTION_NAMES, DistinctionFeatures
+from catalog_identity.matching.execution import configure_execution, validate_execution
 from catalog_identity.matching.semantic_features import MODEL, REVISION, OfflineEncoder, digest
 from catalog_identity.normalization import normalize
 
@@ -154,18 +155,22 @@ def build_network(backbone, numeric_dimension):
             return self
 
         def forward(self, tokens, numeric):
-            cls = self.backbone(**tokens).last_hidden_state[:, 0]
-            return self.head(torch.cat((cls, numeric), dim=1)).squeeze(1)
+            from torch.nn.attention import SDPBackend, sdpa_kernel
+
+            with (
+                torch.autocast(device_type=tokens["input_ids"].device.type, enabled=False),
+                sdpa_kernel([SDPBackend.MATH]),
+            ):
+                cls = self.backbone(**tokens).last_hidden_state[:, 0]
+                return self.head(torch.cat((cls, numeric), dim=1)).squeeze(1)
 
     return JointNetwork().float().cpu()
 
 
 class JointMatcher:
-    def __init__(self, backbone=None, tokenizer=None, encoder_metadata=None):
-        import torch
-
-        torch.set_num_threads(14)
-        torch.manual_seed(42)
+    def __init__(self, backbone=None, tokenizer=None, encoder_metadata=None, device="cpu"):
+        self.execution = configure_execution(device)
+        self.device = self.execution["device"]
         if backbone is None:
             source = OfflineEncoder()
             backbone = source.encoder.model[0].auto_model
@@ -173,12 +178,13 @@ class JointMatcher:
             encoder_metadata = source.metadata
         self.encoder_metadata = encoder_metadata
         self.tokenizer = PairTokenizer(tokenizer)
-        self.network = build_network(backbone, len(DISTINCTION_NAMES))
+        self.network = build_network(backbone, len(DISTINCTION_NAMES)).to(self.device)
         self.features = DistinctionFeatures()
         self.scaler = StandardScaler()
         self.calibration = None
         self.training_record = None
         self.provenance = {}
+        self.training_execution = None
 
     def fit_features(self, train):
         if train.name != "train":
@@ -238,8 +244,7 @@ class JointMatcher:
             ),
         }
 
-    @staticmethod
-    def batch(prepared, indices, orientation):
+    def batch(self, prepared, indices, orientation):
         import torch
 
         if np.isscalar(orientation):
@@ -256,8 +261,8 @@ class JointMatcher:
                 for key in prepared["orientations"][0]
             }
         return (
-            {key: torch.from_numpy(value) for key, value in data.items()},
-            torch.from_numpy(prepared["numeric"][indices]),
+            {key: torch.from_numpy(value).to(self.device) for key, value in data.items()},
+            torch.from_numpy(prepared["numeric"][indices]).to(self.device),
         )
 
     def optimizer(self):
@@ -272,6 +277,8 @@ class JointMatcher:
                 {"params": self.network.head.parameters(), "lr": 1e-3},
             ],
             weight_decay=0.01,
+            foreach=False,
+            fused=False,
         )
 
     def train_prepared(self, prepared, microbatch=8, progress=None):
@@ -302,7 +309,7 @@ class JointMatcher:
                 orientation = (prepared["initial_orientation"][indices] + epoch) % 2
                 tokens, numeric = self.batch(prepared, indices, orientation)
                 logits = self.network(tokens, numeric)
-                labels = torch.from_numpy(prepared["labels"][indices])
+                labels = torch.from_numpy(prepared["labels"][indices]).to(self.device)
                 # Normalize each final partial accumulation group by its actual example count.
                 group_start = (start // 32) * 32
                 group_size = min(32, len(order) - group_start)
@@ -313,8 +320,12 @@ class JointMatcher:
                     / group_size
                 )
                 loss.backward()
+                if not torch.isfinite(loss):
+                    raise ValueError("nonfinite joint training loss; execution stopped")
                 if (batch_index + 1) % accumulation == 0 or batch_index + 1 == batches:
-                    torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1.0)
+                    torch.nn.utils.clip_grad_norm_(
+                        self.network.parameters(), 1.0, error_if_nonfinite=True
+                    )
                     optimizer.step()
                     scheduler.step()
                     optimizer.zero_grad(set_to_none=True)
@@ -329,6 +340,7 @@ class JointMatcher:
             "checkpoint": "final_epoch_only",
             "training_pairs": len(prepared["labels"]),
         }
+        self.training_execution = self.execution
         return self
 
     def fit(self, train, microbatch=8, progress=None):
@@ -346,10 +358,14 @@ class JointMatcher:
             for start in range(0, len(prepared["labels"]), microbatch):
                 indices = np.arange(start, min(start + microbatch, len(prepared["labels"])))
                 logits = [
-                    self.network(*self.batch(prepared, indices, side)).numpy() for side in (0, 1)
+                    self.network(*self.batch(prepared, indices, side)).detach().cpu().numpy()
+                    for side in (0, 1)
                 ]
                 values.extend(((logits[0] + logits[1]) / 2).tolist())
-        return np.asarray(values)
+        values = np.asarray(values)
+        if not np.isfinite(values).all():
+            raise ValueError("nonfinite joint inference logits; execution stopped")
+        return values
 
     def predict(self, split, calibrated=True):
         logits = self.logits_prepared(self.prepare(split))
@@ -379,6 +395,8 @@ class JointMatcher:
                 if p.is_file()
             },
         }
+        if self.training_execution is not None:
+            metadata["execution"] = validate_execution(self.training_execution)
         (directory / "matcher.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
         save_file(
             {
@@ -389,11 +407,13 @@ class JointMatcher:
         )
 
     @classmethod
-    def load(cls, directory: Path, backbone=None, tokenizer=None, encoder_metadata=None):
+    def load(
+        cls, directory: Path, backbone=None, tokenizer=None, encoder_metadata=None, device="cpu"
+    ):
         from safetensors.torch import load_file
 
         metadata = json.loads((directory / "matcher.json").read_text(encoding="utf-8"))
-        if set(metadata) != {
+        base_keys = {
             "architecture",
             "training",
             "encoder",
@@ -403,8 +423,11 @@ class JointMatcher:
             "tokenizer_files",
             "backbone_config_sha256",
             "provenance",
-        }:
+        }
+        if set(metadata) not in (base_keys, base_keys | {"execution"}):
             raise ValueError("unexpected joint matcher metadata keys")
+        if "execution" in metadata:
+            validate_execution(metadata["execution"])
         if metadata.get("architecture") != ARCHITECTURE or metadata.get("feature_names") != list(
             DISTINCTION_NAMES
         ):
@@ -490,7 +513,7 @@ class JointMatcher:
                 trust_remote_code=False,
             )
             encoder_metadata = metadata["encoder"]
-        result = cls(backbone, tokenizer, encoder_metadata)
+        result = cls(backbone, tokenizer, encoder_metadata, device=device)
         if metadata["encoder"] != result.encoder_metadata:
             raise ValueError("joint matcher encoder requirements differ from local assets")
         state = load_file(str(directory / "weights.safetensors"), device="cpu")
@@ -511,5 +534,6 @@ class JointMatcher:
         result.scaler.n_features_in_ = len(mean)
         result.calibration, result.training_record = metadata["calibration"], metadata["training"]
         result.provenance = metadata["provenance"]
+        result.training_execution = metadata.get("execution")
         result.network.eval()
         return result
