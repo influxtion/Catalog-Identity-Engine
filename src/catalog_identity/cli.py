@@ -33,6 +33,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     screening.add_argument("--config", type=Path, required=True)
     screening.add_argument("--output", type=Path, required=True)
+    input_audit = commands.add_parser(
+        "audit-training", help="Audit training ambiguity and prepare local blinded review"
+    )
+    input_audit.add_argument("--config", type=Path, required=True)
+    input_audit.add_argument("--output", type=Path, required=True)
+    input_audit.add_argument("--tokenizer-directory", type=Path)
+    input_audit.add_argument("--control-report", type=Path)
     semantic_screening = commands.add_parser(
         "screen-semantic", help="Fixed offline semantic matcher screening"
     )
@@ -115,6 +122,19 @@ def main(argv: list[str] | None = None) -> int:
     profiling.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command == "audit-training":
+            from catalog_identity.evaluation.training_audit import run_audit
+
+            report = run_audit(
+                load_config(args.config), args.output, args.tokenizer_directory, args.control_report
+            )
+            print(
+                json.dumps(
+                    {k: report[k] for k in ("pairs", "pair_collisions", "review_sampling")},
+                    indent=2,
+                )
+            )
+            return 0
         if args.command in ("pilot-full", "screen-full", "develop-full"):
             from catalog_identity.evaluation import full_encoder
 

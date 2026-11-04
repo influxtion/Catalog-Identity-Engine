@@ -126,9 +126,13 @@ classifier. Optimization checks passed, but its mean recall at 99% empirical pre
 was 6.97% versus 22.78% for the existing control. The [final results and stop decision](experiments/README.md#final-conventional-comparison-existing-control-retained)
 preserve all 27 screening fits across four phases. Seven new configurations failed to
 improve the control under the registered rules; the accuracy goal remains unmet.
-Architecture experiments stopped and the current matcher remains unchanged. The next
-useful evidence is a training-only input/ambiguity audit and independently labeled,
-entity-disjoint hard cases.
+Architecture experiments stopped and the current matcher remains unchanged.
+
+The [training input audit and data plan](experiments/training-data-findings.md) now cover
+all 19,835 training pairs. There were no exact opposite-label input collisions; the
+clearest review priority is 903 missed positives among 904 pairs with disjoint code hints.
+The audit reproduced the saved control and prepared 145 local blinded review cases.
+It identifies missing evidence and annotation priorities, not a new matcher accuracy gain.
 
 ## Run the local dashboard
 
