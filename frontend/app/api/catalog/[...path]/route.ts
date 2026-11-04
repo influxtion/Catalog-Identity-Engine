@@ -12,14 +12,22 @@ async function proxy(
   try {
     const response = await fetch(target, {
       method: request.method,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(path[0] === "annotations" && request.headers.get("Authorization")
+          ? { Authorization: request.headers.get("Authorization")! }
+          : {}),
+      },
       body: request.method === "POST" ? await request.text() : undefined,
       cache: "no-store",
       signal: AbortSignal.timeout(30000),
     });
     return new NextResponse(await response.text(), {
       status: response.status,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+      },
     });
   } catch {
     return NextResponse.json(

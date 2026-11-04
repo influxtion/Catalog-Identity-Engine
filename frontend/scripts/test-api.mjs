@@ -20,6 +20,12 @@ const seeded = spawnSync(
   { cwd: root, env, stdio: "inherit" },
 );
 if (seeded.status !== 0) process.exit(seeded.status || 1);
+const annotations = spawnSync(
+  python,
+  ["frontend/scripts/seed-annotations.py", folder],
+  { cwd: root, env, stdio: "inherit" },
+);
+if (annotations.status !== 0) process.exit(annotations.status || 1);
 const child = spawn(
   python,
   ["-m", "catalog_identity.cli", "serve", "--port", "8011"],

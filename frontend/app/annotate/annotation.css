@@ -1,0 +1,517 @@
+.annotation-app {
+  min-height: 100vh;
+}
+.ann-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+  gap: 20px;
+}
+.ann-home {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--green);
+  font-size: 16px;
+}
+.ann-home b {
+  font-weight: 400;
+  color: #69766b;
+}
+.ann-account {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.ann-account small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.annotation-app button {
+  border: 1px solid #ccd6c7;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  padding: 10px 15px;
+}
+.annotation-app button:hover:not(:disabled) {
+  background: #eaf1df;
+}
+.annotation-app .ann-primary {
+  background: var(--green);
+  color: white;
+  border-color: var(--green);
+}
+.annotation-app .ann-primary:hover:not(:disabled) {
+  background: #366747;
+}
+.annotation-app label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #465548;
+}
+.annotation-app input,
+.annotation-app select,
+.annotation-app textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #cfd8c9;
+  border-radius: 5px;
+  color: var(--ink);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 400;
+}
+.annotation-app textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+.annotation-app main.ann-login {
+  margin: 70px auto;
+  width: min(600px, calc(100% - 40px));
+  padding: 40px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.ann-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+  color: #6b7a65;
+  margin-bottom: 12px;
+}
+.ann-login h1 {
+  line-height: 1.3;
+  margin-bottom: 20px;
+}
+.ann-login p {
+  line-height: 1.8;
+  color: #617060;
+}
+.ann-login form {
+  display: grid;
+  gap: 18px;
+  margin: 28px 0;
+}
+.ann-help {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #6a776b;
+}
+.ann-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+.ann-queue {
+  padding: 28px 18px;
+  border-right: 1px solid var(--line);
+  background: #eff2e9;
+  height: calc(100vh - 85px);
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ann-queue h2 {
+  font-size: 18px;
+  line-height: 1.4;
+}
+.ann-queue p {
+  color: #64715e;
+  font-size: 12px;
+}
+.ann-queue progress {
+  width: 100%;
+  height: 6px;
+  accent-color: var(--green);
+}
+.ann-case-list {
+  overflow: auto;
+  flex: 1;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.ann-case-list button {
+  display: flex;
+  gap: 10px;
+  text-align: left;
+  padding: 12px;
+  align-items: flex-start;
+  background: transparent;
+  border-color: transparent;
+  flex-shrink: 0;
+}
+.ann-case-list button[aria-current="true"] {
+  background: #fff;
+  border-color: #b9caa7;
+  box-shadow: 0 2px 5px #23372c08;
+}
+.ann-case-list strong {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ann-case-list small {
+  display: block;
+  color: #6c795f;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-top: 6px;
+}
+.ann-case-number {
+  font-size: 11px;
+  color: #7c896d;
+  padding-top: 2px;
+}
+.annotation-app main.ann-workspace {
+  margin: 0 auto;
+  padding: 32px;
+  width: 100%;
+  max-width: 1320px;
+}
+.ann-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.ann-intro h1 {
+  font-size: 30px;
+  letter-spacing: -1px;
+}
+.ann-badge {
+  flex-shrink: 0;
+  background: #e5eed7;
+  border: 1px solid #d3dfbf;
+  border-radius: 20px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #486037;
+}
+.ann-guide {
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 14px 18px;
+  border-radius: 7px;
+  margin-bottom: 24px;
+  line-height: 1.7;
+}
+.ann-guide summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+}
+.ann-guide p {
+  margin-top: 12px;
+  color: #596957;
+  max-width: 90ch;
+}
+.ann-error,
+.ann-notice {
+  padding: 15px 18px;
+  border-radius: 7px;
+  margin: 18px 0;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ann-error {
+  color: #8b3b24;
+  background: #fff1e7;
+  border: 1px solid #e9c8ae;
+}
+.ann-error button {
+  display: block;
+  margin-top: 12px;
+}
+.ann-notice {
+  background: #e6f0dc;
+  border: 1px solid #c9ddbb;
+}
+.ann-case-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #72806d;
+  margin-bottom: 12px;
+}
+.ann-observations,
+.ann-prior-reviews {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.ann-observation {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 24px;
+  min-width: 0;
+}
+.ann-observation h2 {
+  font-size: 19px;
+  line-height: 1.5;
+  letter-spacing: -0.3px;
+  overflow-wrap: anywhere;
+}
+.annotation-app dl {
+  margin: 20px 0;
+  display: grid;
+  gap: 9px;
+}
+.annotation-app dl div {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.annotation-app dt {
+  color: #7a8571;
+  text-transform: capitalize;
+}
+.annotation-app dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ann-missing {
+  color: #99a18f;
+}
+.ann-observation details {
+  border-top: 1px solid var(--line);
+  padding-top: 15px;
+  font-size: 12px;
+}
+.ann-observation summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.ann-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 320px;
+  overflow: auto;
+  line-height: 1.8;
+  color: #53614e;
+  margin-top: 12px;
+  padding-right: 8px;
+}
+.ann-panel {
+  margin-top: 24px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 26px;
+}
+.ann-panel > p {
+  margin-top: 8px;
+  color: #748068;
+  line-height: 1.6;
+}
+.ann-form {
+  display: grid;
+  gap: 22px;
+  border: 0;
+  padding: 0;
+  margin: 24px 0 0;
+  min-width: 0;
+}
+.ann-form:disabled {
+  opacity: 0.8;
+}
+.ann-decisions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+}
+.ann-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 22px;
+}
+.ann-section-heading p {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #75816d;
+}
+.ann-section-heading button {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.ann-evidence {
+  display: grid;
+  gap: 16px;
+  border: 1px solid #dee5d5;
+  background: #f8faf4;
+  padding: 20px;
+  border-radius: 7px;
+}
+.ann-evidence-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 14px;
+}
+.ann-source-fields {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 14px;
+}
+.annotation-app .ann-remove {
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  padding: 0;
+  justify-self: end;
+  color: #95654b;
+}
+.ann-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  padding-top: 24px;
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.ann-actions > span {
+  color: #708065;
+  font-size: 12px;
+}
+.ann-confirm {
+  background: #f1f5e9;
+  padding: 16px;
+  border-radius: 6px;
+  text-align: right;
+}
+.ann-confirm p {
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+.ann-confirm button + button {
+  margin-left: 8px;
+}
+.ann-prior-reviews {
+  margin-top: 20px;
+}
+.ann-prior-reviews article {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 18px;
+}
+.ann-prior-reviews p {
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.ann-prior-reviews blockquote {
+  margin: 15px 0 0;
+  padding: 10px 14px;
+  background: #f1f5eb;
+  font-size: 13px;
+}
+.ann-prior-reviews small {
+  display: block;
+  font-size: 10px;
+  color: #68755e;
+  margin: 6px 0;
+}
+.ann-empty {
+  padding: 70px 25px;
+  text-align: center;
+  color: #65735c;
+}
+.ann-empty svg {
+  margin: auto auto 20px;
+}
+.ann-empty p {
+  margin-top: 14px;
+  line-height: 1.8;
+}
+@media (max-width: 1100px) {
+  .ann-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+  .ann-intro {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .ann-decisions {
+    grid-template-columns: 1fr 1fr;
+  }
+  .annotation-app main.ann-workspace {
+    padding: 24px;
+  }
+}
+@media (max-width: 760px) {
+  .ann-header {
+    padding: 16px;
+  }
+  .ann-home b {
+    display: none;
+  }
+  .ann-layout {
+    display: block;
+  }
+  .ann-queue {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .ann-case-list {
+    max-height: 150px;
+  }
+  .ann-observations,
+  .ann-prior-reviews {
+    grid-template-columns: 1fr;
+  }
+  .annotation-app main.ann-workspace {
+    padding: 20px 14px;
+  }
+  .ann-intro h1 {
+    font-size: 26px;
+  }
+  .ann-panel {
+    padding: 20px 16px;
+  }
+  .ann-evidence-options,
+  .ann-source-fields {
+    grid-template-columns: 1fr;
+  }
+  .ann-actions,
+  .ann-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .ann-confirm {
+    text-align: left;
+  }
+  .annotation-app main.ann-login {
+    margin: 30px auto;
+    padding: 26px;
+  }
+}

@@ -207,6 +207,19 @@ kbd {
 .sidebar nav button:hover {
   background: #304638;
 }
+.sidebar nav a.annotation-nav {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 13px;
+  color: #b6c7b8;
+  font-size: 12px;
+  text-decoration: none;
+  border-radius: 6px;
+}
+.sidebar nav a.annotation-nav:hover {
+  background: #304638;
+}
 .sidebar nav button.active {
   background: #d6e9b8;
   color: #233c28;
@@ -1350,11 +1363,14 @@ main {
   }
   .sidebar nav {
     display: flex;
+    flex-wrap: wrap;
     gap: 4px;
     margin-top: 18px;
   }
   .sidebar nav button {
     justify-content: center;
+    width: auto;
+    flex: 1;
     padding: 10px 7px;
     font-size: 10px;
     gap: 5px;
@@ -1362,6 +1378,12 @@ main {
   .sidebar nav button svg {
     width: 15px;
     height: 15px;
+  }
+  .sidebar nav a.annotation-nav {
+    flex-basis: 100%;
+    justify-content: center;
+    padding: 8px;
+    font-size: 11px;
   }
   .sidebar nav em {
     display: none;
