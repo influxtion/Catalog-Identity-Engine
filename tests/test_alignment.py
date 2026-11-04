@@ -34,6 +34,8 @@ def test_typed_units_modules_packs_and_unknowns():
 
 @pytest.mark.parametrize("learner", ["logistic", "lightgbm"])
 def test_v4_symmetric_finite_train_only_and_roundtrip(tmp_path, learner):
+    if learner == "lightgbm":
+        pytest.importorskip("lightgbm")
     paths = write_synthetic(tmp_path / "fixture")
     train = load_wdc_pairs(paths["train"], "train")
     validation = load_wdc_pairs(paths["validation"], "validation")
@@ -88,3 +90,20 @@ def test_description_support_missingness_and_metadata_invariance(tmp_path):
     np.testing.assert_allclose(row, values(altered, b))
     empty = b.model_copy(update={"title": "", "description": None})
     assert np.isfinite(values(a, empty)).all()
+
+
+def test_unseen_tokens_retain_weight_without_fitting_on_assessment(tmp_path):
+    paths = write_synthetic(tmp_path / "fixture")
+    features = AlignmentFeatures().fit(load_wdc_pairs(paths["train"], "train"))
+    vocabulary = dict(features.word_vectorizer.vocabulary_)
+    known = next(w for w in vocabulary if " " not in w and w.isalpha())
+    a = Listing(source="fiction", source_id="a", title=f"{known} novelzzax120")
+    b = Listing(source="fiction", source_id="b", title=f"{known} novelzzax990")
+
+    def containment(right):
+        row = features.transform({a.key: a, right.key: right}, [(a.key, right.key)])[0]
+        return dict(zip(features.names, row, strict=True))["idf_containment_min"]
+
+    assert 0 < containment(b) < 1
+    assert containment(b.model_copy(update={"title": a.title})) == 1
+    assert features.word_vectorizer.vocabulary_ == vocabulary

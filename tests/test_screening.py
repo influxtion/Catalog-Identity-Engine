@@ -83,6 +83,7 @@ def test_registered_selection_support_ap_guard_and_tie_order():
 
 
 def test_screen_never_reads_validation_or_test(tmp_path, monkeypatch):
+    pytest.importorskip("lightgbm")
     paths = write_synthetic(tmp_path / "fixture")
     config = RunConfig(
         dataset_name="fixture",

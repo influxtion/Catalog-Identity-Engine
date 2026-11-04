@@ -75,6 +75,18 @@ optional for the service and lexical baseline.
 See [the development protocol](docs/development.md) for partition weighting, model selection,
 negative-pair ablations, and the limits of these scores.
 
+For train-only model selection, the fixed v3/v4 LightGBM screening matrix uses three
+entity-disjoint folds and never opens or hashes validation/test files:
+
+```sh
+uv run catalog-identity screen-matchers --config configs/wdc-products-large.json --output runs/screening-large
+```
+
+Its precision envelopes are threshold-selection diagnostics, not precision guarantees.
+Official large train/validation share all 500 entities despite disjoint offers; subsequent
+validation comparison is seen-entity development evidence. See the
+[registered experiment](experiments/matcher-v4-preregistration.md) for selection and stopping rules.
+
 ## Run the local dashboard
 
 Install the `server` extra above, then use three terminals from the repository root:

@@ -127,6 +127,8 @@ def screen(config, output: Path):
         "synthetic": config.synthetic,
         "dataset_name": config.dataset_name,
         "dataset_version": config.dataset_version,
+        "protocol": config.protocol.model_dump() if config.protocol else None,
+        "assessment_weights": {"positive": 1, "negative": 3},
         "seed": config.seed,
         "inputs": {"train": file_hash(config.train)},
         "implementation": implementation_manifest(),

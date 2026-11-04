@@ -3,6 +3,48 @@
 The original baseline protocol remains in [evaluation.md](evaluation.md). The `develop`
 command is a separate validation-only workflow. It does not open the test path.
 
+## Train-only screening and v4 alignment
+
+`screen-matchers` runs the [preregistered four-candidate matrix](../experiments/matcher-v4-preregistration.md)
+using only the training file. Neither validation nor test is loaded or hashed. Three seed-42
+entity folds separately fit vocabularies and models; training pairs require both endpoints
+outside the assessment fold and assessment pairs require both inside. Boundary pairs are
+excluded and counted. Complete, consistent entity metadata is required. All assessment
+positive entities and matched positive entities are counted per fold.
+
+Assessment weights are 1 for positives and 3 for negatives, correcting the expected loss of
+cross-fold negatives across the three assessments. Training pair restrictions also alter
+class balance. This is an approximate training-source screening protocol, not a guarantee
+for deployment data. Raw and weighted AP and precision envelopes are reported separately.
+The 95/98/99% envelopes select their own thresholds on the reported population and require
+five predictions: they are optimistic diagnostics, not independently validated policies.
+Fold scores are never pooled into one threshold. The fixed selection rule includes support
+in two folds and a numerical AP guard; this does not itself establish improvements in two folds.
+
+Version 4 extends v3 with separator-aware model-code alignment, preserved numeric/suffix
+distinctions, typed capacity/frequency/dimension/pack evidence, and separate module count,
+module capacity and total capacity. For example, `2x8GB` and `16GB` agree on total capacity
+but the latter's module count remains unknown. Missing and one-sided information remain
+separate from disagreement. Symmetric title-to-other-description evidence includes character,
+token, code and specification support; compatibility lists never become hard identity rules.
+IDF weights and vocabularies use training listings only. Unknown words receive the largest
+training unigram IDF so novel distinguishing terms cannot vanish from containment denominators.
+Additional text parsing is cached
+and bounded to 8,192 characters and 24 codes per field. Existing v2/v3 feature implementations
+and artifacts remain supported; v2 remains the CLI default.
+
+```sh
+uv run catalog-identity screen-matchers --config configs/wdc-products-large.json --output runs/screening-reproduction
+# After selection, pass the selected feature version, num_leaves and n_estimators to develop.
+```
+
+Official large training and validation have disjoint listing IDs but share all 500 entities.
+The calibration/policy buckets are disjoint from each other, not from training entities.
+Official validation therefore measures seen-entity development. Reports now expose this
+overlap explicitly without rejecting the benchmark's legitimate protocol. Full-validation
+replays reuse calibration and policy-selection observations and are not independent evidence.
+No new frozen test run or automatic production promotion is part of this experiment.
+
 ## Features and learners
 
 The enriched feature space adds train-fitted title/description character TF-IDF similarities,

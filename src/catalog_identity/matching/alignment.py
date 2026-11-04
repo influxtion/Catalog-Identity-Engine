@@ -42,10 +42,13 @@ def evidence(a, b):
     return (*set_evidence(a, b), float(bool(a) != bool(b)))
 
 
-@lru_cache(maxsize=16384)
 def parse_text(text):
     """Bound parsing and pair comparisons while preserving meaningful code suffixes."""
-    text = text[:8192].lower()
+    return _parse_text(text[:8192].lower())
+
+
+@lru_cache(maxsize=16384)
+def _parse_text(text):
     # Join only adjacent alpha/numeric fragments, never arbitrary word pairs.
     joined = re.sub(r"\b([a-z]{1,12})[ -]+(?=\d)", r"\1", text)
     joined = re.sub(r"(?<=\d)-(?=[a-z0-9])", "", joined)
@@ -146,9 +149,17 @@ class AlignmentFeatures(DistinctionFeatures):
             )
         vocabulary = self.word_vectorizer.vocabulary_ if self.word_vectorizer is not None else {}
         idf = self.word_vectorizer.idf_ if self.word_vectorizer is not None else []
+        # Novel model terms must not disappear from an unseen-entity denominator.
+        # Fall back to the largest training unigram IDF, never an assessment statistic.
+        unknown_weight = max(
+            (float(idf[i]) for w, i in vocabulary.items() if " " not in w), default=1.0
+        )
 
         def weight(words):
-            return sum(float(idf[vocabulary[w]]) for w in words if w in vocabulary)
+            return sum(
+                float(idf[vocabulary[w]]) if w in vocabulary else unknown_weight
+                for w in sorted(words)
+            )
 
         extra = []
         for i, (a, b) in enumerate(pairs):
